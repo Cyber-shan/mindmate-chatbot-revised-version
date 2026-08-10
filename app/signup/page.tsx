@@ -1,5 +1,6 @@
 "use client";
-
+import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,7 @@ export default function Signup() {
   const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.password || !form.confirm) {
       setError("Please fill in all fields.");
@@ -33,21 +34,40 @@ export default function Signup() {
       return;
     }
     setError("");
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/chat");
-    }, 900);
+setLoading(true);
+
+const supabase = createClient();
+
+const { error } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+  options: {
+    data: {
+      name: form.name,
+    },
+  },
+});
+
+if (error) {
+  setError(error.message);
+  setLoading(false);
+  return;
+}
+
+router.push("/chat");
+router.refresh();
   };
 
   const inputBase: React.CSSProperties = {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "10px",
-    border: "1.5px solid #E0E0DC",
-    background: "#F8F8F6",
+    borderWidth: "1.5px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
+    background: "var(--surface-subtle)",
     fontSize: "1rem",
-    color: "#111110",
+    color: "var(--foreground)",
     outline: "none",
     transition: "border-color 0.15s ease, background 0.15s ease",
     fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -55,12 +75,12 @@ export default function Signup() {
   };
 
   const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "#111110";
-    e.currentTarget.style.background = "#FFFFFF";
+    e.currentTarget.style.borderColor = "var(--primary)";
+    e.currentTarget.style.background = "var(--background)";
   };
   const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "#E0E0DC";
-    e.currentTarget.style.background = "#F8F8F6";
+    e.currentTarget.style.borderColor = "var(--border)";
+    e.currentTarget.style.background = "var(--surface-subtle)";
   };
 
   const passwordsMatch = form.confirm.length > 0 && form.password === form.confirm;
@@ -68,8 +88,9 @@ export default function Signup() {
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center justify-center px-5 py-12"
-      style={{ background: "#FFFFFF", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", WebkitFontSmoothing: "antialiased" }}
+      style={{ background: "var(--background)", color: "var(--foreground)", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", transition: "background-color 180ms ease, color 180ms ease" }}
     >
+      <ThemeToggle className="fixed right-5 top-5 z-20" />
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -81,16 +102,16 @@ export default function Signup() {
         <div className="flex flex-col items-center mb-10">
           <div
             className="w-11 h-11 flex items-center justify-center rounded-2xl mb-4"
-            style={{ background: "#111110" }}
+            style={{ background: "var(--primary)" }}
           >
-            <Bot size={20} className="text-white" />
+            <Bot size={20} style={{ color: "var(--on-primary)" }} />
           </div>
           <span
             style={{
               fontFamily: "'Lora', Georgia, serif",
               fontWeight: 600,
               fontSize: "1.125rem",
-              color: "#111110",
+              color: "var(--foreground)",
               letterSpacing: "-0.02em",
             }}
           >
@@ -104,7 +125,7 @@ export default function Signup() {
             style={{
               fontWeight: 700,
               fontSize: "1.625rem",
-              color: "#111110",
+              color: "var(--foreground)",
               letterSpacing: "-0.03em",
               lineHeight: 1.2,
               marginBottom: "0.45rem",
@@ -112,7 +133,7 @@ export default function Signup() {
           >
             Create an account
           </h1>
-          <p style={{ fontSize: "0.9375rem", color: "#6B6B67", lineHeight: 1.55 }}>
+          <p style={{ fontSize: "0.9375rem", color: "var(--text-muted)", lineHeight: 1.55 }}>
             Begin your wellness journey today.
           </p>
         </div>
@@ -121,7 +142,7 @@ export default function Signup() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full name */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29", marginBottom: "7px" }}>
+            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Full name
             </label>
             <input
@@ -138,7 +159,7 @@ export default function Signup() {
 
           {/* Email */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29", marginBottom: "7px" }}>
+            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Email address
             </label>
             <input
@@ -155,7 +176,7 @@ export default function Signup() {
 
           {/* Password */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29", marginBottom: "7px" }}>
+            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Password
             </label>
             <div style={{ position: "relative" }}>
@@ -174,11 +195,11 @@ export default function Signup() {
                 onClick={() => setShowPassword((v) => !v)}
                 style={{
                   position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
-                  color: "#6B6B67", background: "none", border: "none", cursor: "pointer",
+                  color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer",
                   padding: "4px", display: "flex", alignItems: "center", minWidth: "28px", minHeight: "28px",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#111110")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B67")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -187,7 +208,7 @@ export default function Signup() {
 
           {/* Confirm password */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29", marginBottom: "7px" }}>
+            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Confirm password
             </label>
             <div style={{ position: "relative" }}>
@@ -200,7 +221,7 @@ export default function Signup() {
                 style={{
                   ...inputBase,
                   paddingRight: "46px",
-                  ...(passwordsMatch ? { borderColor: "#2D7A4F", background: "#F6FAF7" } : {}),
+                  ...(passwordsMatch ? { borderColor: "var(--success)", background: "var(--success-surface)" } : {}),
                 }}
                 onFocus={(e) => {
                   if (!passwordsMatch) onFocus(e);
@@ -219,7 +240,7 @@ export default function Signup() {
                     display: "flex", alignItems: "center",
                   }}
                 >
-                  <Check size={14} style={{ color: "#2D7A4F" }} />
+                  <Check size={14} style={{ color: "var(--success)" }} />
                 </motion.div>
               )}
               <button
@@ -227,11 +248,11 @@ export default function Signup() {
                 onClick={() => setShowConfirm((v) => !v)}
                 style={{
                   position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
-                  color: "#6B6B67", background: "none", border: "none", cursor: "pointer",
+                  color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer",
                   padding: "4px", display: "flex", alignItems: "center", minWidth: "28px", minHeight: "28px",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#111110")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B67")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
               >
                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -248,20 +269,20 @@ export default function Signup() {
                 width: "18px",
                 height: "18px",
                 marginTop: "2px",
-                border: agreed ? "none" : "1.5px solid #CACAC6",
-                background: agreed ? "#111110" : "transparent",
+                border: agreed ? "none" : "1.5px solid var(--checkbox-border)",
+                background: agreed ? "var(--primary)" : "transparent",
                 cursor: "pointer",
               }}
             >
-              {agreed && <Check size={11} className="text-white" />}
+              {agreed && <Check size={11} style={{ color: "var(--on-primary)" }} />}
             </button>
-            <p style={{ fontSize: "0.875rem", color: "#6B6B67", lineHeight: 1.55 }}>
+            <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", lineHeight: 1.55 }}>
               I agree to the{" "}
-              <span style={{ color: "#111110", fontWeight: 500, cursor: "pointer", textDecorationLine: "underline" }}>
+              <span style={{ color: "var(--foreground)", fontWeight: 500, cursor: "pointer", textDecorationLine: "underline" }}>
                 Terms of Service
               </span>{" "}
               and{" "}
-              <span style={{ color: "#111110", fontWeight: 500, cursor: "pointer", textDecorationLine: "underline" }}>
+              <span style={{ color: "var(--foreground)", fontWeight: 500, cursor: "pointer", textDecorationLine: "underline" }}>
                 Privacy Policy
               </span>
             </p>
@@ -269,7 +290,7 @@ export default function Signup() {
 
           {/* Error */}
           {error && (
-            <p style={{ fontSize: "0.875rem", color: "#C0392B" }}>{error}</p>
+            <p style={{ fontSize: "0.875rem", color: "var(--error)" }}>{error}</p>
           )}
 
           {/* Submit */}
@@ -278,8 +299,8 @@ export default function Signup() {
             disabled={loading}
             className="w-full flex items-center justify-center rounded-xl active:scale-[0.98] transition-transform"
             style={{
-              background: loading ? "#3A3A38" : "#111110",
-              color: "#FFFFFF",
+              background: loading ? "var(--primary-disabled)" : "var(--primary)",
+              color: "var(--on-primary)",
               padding: "13px 16px",
               fontSize: "0.9375rem",
               fontWeight: 600,
@@ -289,14 +310,14 @@ export default function Signup() {
               marginTop: "4px",
               transition: "background 0.15s ease",
             }}
-            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#2A2A28"; }}
-            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#111110"; }}
+            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-hover)"; }}
+            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "var(--primary)"; }}
           >
             {loading ? (
               <span className="flex items-center gap-2">
                 <motion.span
                   className="block rounded-full border-2"
-                  style={{ width: "16px", height: "16px", borderColor: "rgba(255,255,255,0.25)", borderTopColor: "#FFFFFF", flexShrink: 0 }}
+                  style={{ width: "16px", height: "16px", borderColor: "var(--spinner-track)", borderTopColor: "var(--on-primary)", flexShrink: 0 }}
                   animate={{ rotate: 360 }}
                   transition={{ duration: 0.75, repeat: Infinity, ease: "linear" }}
                 />
@@ -307,11 +328,11 @@ export default function Signup() {
         </form>
 
         {/* Sign in link */}
-        <p className="text-center mt-7" style={{ fontSize: "0.9375rem", color: "#6B6B67" }}>
+        <p className="text-center mt-7" style={{ fontSize: "0.9375rem", color: "var(--text-muted)" }}>
           Already have an account?{" "}
           <Link
             href="/"
-            style={{ color: "#111110", fontWeight: 600, textDecoration: "none" }}
+            style={{ color: "var(--foreground)", fontWeight: 600, textDecoration: "none" }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.textDecoration = "none")}
           >

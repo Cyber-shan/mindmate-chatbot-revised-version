@@ -1,4 +1,6 @@
 "use client";
+import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -14,28 +16,44 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/chat");
-    }, 900);
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!email || !password) {
+    setError("Please fill in all fields.");
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    setError(error.message);
+    setLoading(false);
+    return;
+  }
+
+  router.push("/chat");
+  router.refresh();
+};
 
   const inputBase: React.CSSProperties = {
     width: "100%",
     padding: "12px 14px",
     borderRadius: "10px",
-    border: "1.5px solid #E0E0DC",
-    background: "#F8F8F6",
+    borderWidth: "1.5px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
+    background: "var(--surface-subtle)",
     fontSize: "1rem",
-    color: "#111110",
+    color: "var(--foreground)",
     outline: "none",
     transition: "border-color 0.15s ease, background 0.15s ease",
     fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
@@ -43,19 +61,20 @@ export default function Login() {
   };
 
   const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "#111110";
-    e.currentTarget.style.background = "#FFFFFF";
+    e.currentTarget.style.borderColor = "var(--primary)";
+    e.currentTarget.style.background = "var(--background)";
   };
   const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "#E0E0DC";
-    e.currentTarget.style.background = "#F8F8F6";
+    e.currentTarget.style.borderColor = "var(--border)";
+    e.currentTarget.style.background = "var(--surface-subtle)";
   };
 
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center justify-center px-5 py-12"
-      style={{ background: "#FFFFFF", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", WebkitFontSmoothing: "antialiased" }}
+      style={{ background: "var(--background)", color: "var(--foreground)", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", transition: "background-color 180ms ease, color 180ms ease" }}
     >
+      <ThemeToggle className="fixed right-5 top-5 z-20" />
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -67,16 +86,16 @@ export default function Login() {
         <div className="flex flex-col items-center mb-10">
           <div
             className="w-11 h-11 flex items-center justify-center rounded-2xl mb-4"
-            style={{ background: "#111110" }}
+            style={{ background: "var(--primary)" }}
           >
-            <Bot size={20} className="text-white" />
+            <Bot size={20} style={{ color: "var(--on-primary)" }} />
           </div>
           <span
             style={{
               fontFamily: "'Lora', Georgia, serif",
               fontWeight: 600,
               fontSize: "1.125rem",
-              color: "#111110",
+              color: "var(--foreground)",
               letterSpacing: "-0.02em",
             }}
           >
@@ -90,7 +109,7 @@ export default function Login() {
             style={{
               fontWeight: 700,
               fontSize: "1.625rem",
-              color: "#111110",
+              color: "var(--foreground)",
               letterSpacing: "-0.03em",
               lineHeight: 1.2,
               marginBottom: "0.45rem",
@@ -98,7 +117,7 @@ export default function Login() {
           >
             Welcome back
           </h1>
-          <p style={{ fontSize: "0.9375rem", color: "#6B6B67", lineHeight: 1.55 }}>
+          <p style={{ fontSize: "0.9375rem", color: "var(--text-muted)", lineHeight: 1.55 }}>
             Sign in to continue your conversation.
           </p>
         </div>
@@ -108,7 +127,7 @@ export default function Login() {
           {/* Email */}
           <div>
             <label
-              style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29", marginBottom: "7px" }}
+              style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}
             >
               Email address
             </label>
@@ -127,14 +146,14 @@ export default function Login() {
           {/* Password */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label style={{ fontSize: "0.875rem", fontWeight: 500, color: "#2C2C29" }}>
+              <label style={{ fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)" }}>
                 Password
               </label>
               <button
                 type="button"
-                style={{ fontSize: "0.8125rem", color: "#4A4A47", fontWeight: 500, background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#111110")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#4A4A47")}
+                style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 500, background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
               >
                 Forgot password?
               </button>
@@ -158,7 +177,7 @@ export default function Login() {
                   right: "14px",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  color: "#6B6B67",
+                  color: "var(--text-muted)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
@@ -169,8 +188,8 @@ export default function Login() {
                   minWidth: "28px",
                   minHeight: "28px",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#111110")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#6B6B67")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -179,7 +198,7 @@ export default function Login() {
 
           {/* Error */}
           {error && (
-            <p style={{ fontSize: "0.875rem", color: "#C0392B", marginTop: "-4px" }}>{error}</p>
+            <p style={{ fontSize: "0.875rem", color: "var(--error)", marginTop: "-4px" }}>{error}</p>
           )}
 
           {/* Submit */}
@@ -188,8 +207,8 @@ export default function Login() {
             disabled={loading}
             className="w-full flex items-center justify-center rounded-xl active:scale-[0.98] transition-transform"
             style={{
-              background: loading ? "#3A3A38" : "#111110",
-              color: "#FFFFFF",
+              background: loading ? "var(--primary-disabled)" : "var(--primary)",
+              color: "var(--on-primary)",
               padding: "13px 16px",
               fontSize: "0.9375rem",
               fontWeight: 600,
@@ -199,14 +218,14 @@ export default function Login() {
               marginTop: "4px",
               transition: "background 0.15s ease",
             }}
-            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#2A2A28"; }}
-            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "#111110"; }}
+            onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "var(--primary-hover)"; }}
+            onMouseLeave={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = "var(--primary)"; }}
           >
             {loading ? (
               <span className="flex items-center gap-2">
                 <motion.span
                   className="block rounded-full border-2"
-                  style={{ width: "16px", height: "16px", borderColor: "rgba(255,255,255,0.25)", borderTopColor: "#FFFFFF", flexShrink: 0 }}
+                  style={{ width: "16px", height: "16px", borderColor: "var(--spinner-track)", borderTopColor: "var(--on-primary)", flexShrink: 0 }}
                   animate={{ rotate: 360 }}
                   transition={{ duration: 0.75, repeat: Infinity, ease: "linear" }}
                 />
@@ -218,17 +237,17 @@ export default function Login() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px" style={{ background: "#E8E8E5" }} />
-          <span style={{ fontSize: "0.8125rem", color: "#6B6B67" }}>or</span>
-          <div className="flex-1 h-px" style={{ background: "#E8E8E5" }} />
+          <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
+          <span style={{ fontSize: "0.8125rem", color: "var(--text-muted)" }}>or</span>
+          <div className="flex-1 h-px" style={{ background: "var(--border-subtle)" }} />
         </div>
 
         {/* Signup link */}
-        <p className="text-center" style={{ fontSize: "0.9375rem", color: "#6B6B67" }}>
+        <p className="text-center" style={{ fontSize: "0.9375rem", color: "var(--text-muted)" }}>
           Don&apos;t have an account?{" "}
           <Link
             href="/signup"
-            style={{ color: "#111110", fontWeight: 600, textDecoration: "none" }}
+            style={{ color: "var(--foreground)", fontWeight: 600, textDecoration: "none" }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.textDecoration = "none")}
           >
