@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Bot,
+  ChevronDown,
   Headphones,
   Heart,
   LogOut,
@@ -81,6 +82,7 @@ export default function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const [progressStage, setProgressStage] = useState<ResponseProgressStage | null>(null);
   const [progressElapsedSeconds, setProgressElapsedSeconds] = useState(0);
+  const [isProgressExpanded, setIsProgressExpanded] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -239,6 +241,7 @@ export default function Chat() {
     setInput("");
     setChatError(null);
     setProgressElapsedSeconds(0);
+    setIsProgressExpanded(false);
     setProgressStage("saving-message");
     setIsTyping(true);
 
@@ -425,6 +428,7 @@ export default function Chat() {
   const loadConversation = async (conversationId: string) => {
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
+    setIsProgressExpanded(false);
     setProgressStage(null);
     setIsTyping(false);
     setIsHistoryLoading(true);
@@ -464,6 +468,7 @@ export default function Chat() {
     setMessages([]);
     setInput("");
     setChatError(null);
+    setIsProgressExpanded(false);
     setProgressStage(null);
     setIsTyping(false);
   };
@@ -947,7 +952,13 @@ export default function Chat() {
                           borderRadius: "18px 18px 18px 4px",
                         }}
                       >
-                        <div className="flex items-center justify-between gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setIsProgressExpanded((isExpanded) => !isExpanded)}
+                          aria-expanded={isProgressExpanded}
+                          aria-controls="mindmate-progress-details"
+                          className="flex w-full items-center justify-between gap-4 text-left"
+                        >
                           <div className="flex items-center gap-2 min-w-0">
                             <motion.span
                               className="block flex-shrink-0 rounded-full"
@@ -966,79 +977,107 @@ export default function Chat() {
                               MindMate is working
                             </span>
                           </div>
-                          <span
-                            aria-hidden="true"
-                            className="flex-shrink-0 tabular-nums"
-                            style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}
-                          >
-                            {progressElapsedSeconds}s
-                          </span>
-                        </div>
+                          <div className="flex flex-shrink-0 items-center gap-1.5">
+                            <span
+                              aria-hidden="true"
+                              className="tabular-nums"
+                              style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}
+                            >
+                              {progressElapsedSeconds}s
+                            </span>
+                            <motion.span
+                              aria-hidden="true"
+                              className="flex items-center justify-center"
+                              animate={{ rotate: isProgressExpanded ? 180 : 0 }}
+                              transition={{ duration: 0.18 }}
+                              style={{ color: "var(--text-muted)" }}
+                            >
+                              <ChevronDown size={14} />
+                            </motion.span>
+                          </div>
+                        </button>
 
-                        <AnimatePresence mode="wait">
-                          <motion.span
-                            key={progressActivity}
-                            initial={{ opacity: 0, y: 3 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -3 }}
-                            transition={{ duration: 0.15 }}
-                            aria-live="polite"
-                            className="mt-1.5 block"
-                            style={{ color: "var(--text-secondary)", fontSize: "0.76rem" }}
-                          >
-                            {progressActivity}
-                          </motion.span>
-                        </AnimatePresence>
-
-                        <div className="mt-3 space-y-1.5">
-                          {RESPONSE_PROGRESS_STEPS.map((step, index) => {
-                            const isComplete = index < progressStageIndex;
-                            const isActive = index === progressStageIndex;
-
-                            return (
-                              <div key={step.id} className="flex items-center gap-2">
-                                <span
-                                  className="flex flex-shrink-0 items-center justify-center rounded-full"
-                                  style={{
-                                    width: "14px",
-                                    height: "14px",
-                                    border: `1px solid ${
-                                      isComplete || isActive ? "var(--primary)" : "var(--border)"
-                                    }`,
-                                    background: isComplete ? "var(--primary)" : "transparent",
-                                    color: "var(--on-primary)",
-                                    fontSize: "0.58rem",
-                                    fontWeight: 700,
-                                  }}
+                        <AnimatePresence initial={false}>
+                          {isProgressExpanded && (
+                            <motion.div
+                              id="mindmate-progress-details"
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="overflow-hidden"
+                            >
+                              <AnimatePresence mode="wait">
+                                <motion.span
+                                  key={progressActivity}
+                                  initial={{ opacity: 0, y: 3 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -3 }}
+                                  transition={{ duration: 0.15 }}
+                                  aria-live="polite"
+                                  className="mt-2 block"
+                                  style={{ color: "var(--text-secondary)", fontSize: "0.76rem" }}
                                 >
-                                  {isComplete ? (
-                                    "✓"
-                                  ) : isActive ? (
-                                    <motion.span
-                                      className="block rounded-full"
-                                      style={{
-                                        width: "5px",
-                                        height: "5px",
-                                        background: "var(--primary)",
-                                      }}
-                                      animate={{ opacity: [0.35, 1, 0.35] }}
-                                      transition={{ duration: 1, repeat: Infinity }}
-                                    />
-                                  ) : null}
-                                </span>
-                                <span
-                                  style={{
-                                    color: isActive ? "var(--foreground)" : "var(--text-muted)",
-                                    fontSize: "0.7rem",
-                                    fontWeight: isActive ? 500 : 400,
-                                  }}
-                                >
-                                  {step.label}
-                                </span>
+                                  {progressActivity}
+                                </motion.span>
+                              </AnimatePresence>
+
+                              <div className="mt-3 space-y-1.5">
+                                {RESPONSE_PROGRESS_STEPS.map((step, index) => {
+                                  const isComplete = index < progressStageIndex;
+                                  const isActive = index === progressStageIndex;
+
+                                  return (
+                                    <div key={step.id} className="flex items-center gap-2">
+                                      <span
+                                        className="flex flex-shrink-0 items-center justify-center rounded-full"
+                                        style={{
+                                          width: "14px",
+                                          height: "14px",
+                                          border: `1px solid ${
+                                            isComplete || isActive
+                                              ? "var(--primary)"
+                                              : "var(--border)"
+                                          }`,
+                                          background: isComplete ? "var(--primary)" : "transparent",
+                                          color: "var(--on-primary)",
+                                          fontSize: "0.58rem",
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        {isComplete ? (
+                                          "✓"
+                                        ) : isActive ? (
+                                          <motion.span
+                                            className="block rounded-full"
+                                            style={{
+                                              width: "5px",
+                                              height: "5px",
+                                              background: "var(--primary)",
+                                            }}
+                                            animate={{ opacity: [0.35, 1, 0.35] }}
+                                            transition={{ duration: 1, repeat: Infinity }}
+                                          />
+                                        ) : null}
+                                      </span>
+                                      <span
+                                        style={{
+                                          color: isActive
+                                            ? "var(--foreground)"
+                                            : "var(--text-muted)",
+                                          fontSize: "0.7rem",
+                                          fontWeight: isActive ? 500 : 400,
+                                        }}
+                                      >
+                                        {step.label}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                       </motion.div>
                     )}
