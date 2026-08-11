@@ -33,6 +33,12 @@ type ConversationSummary = {
   updated_at: string;
 };
 
+type ConversationHistoryGroup = {
+  dateKey: string;
+  label: string;
+  conversations: ConversationSummary[];
+};
+
 type StoredMessage = {
   id: string;
   role: "user" | "assistant";
@@ -56,6 +62,8 @@ const RESPONSE_PROGRESS_STEPS: Array<{
   { id: "saving-response", label: "Saving to history" },
 ];
 
+const PROCESSING_LABEL = "mindmate is working";
+
 const SUGGESTIONS = [
   { icon: Heart, label: "I've been feeling anxious lately" },
   { icon: Wind, label: "Help me manage stress" },
@@ -69,6 +77,61 @@ function createConversationTitle(message: string) {
   return normalizedTitle.length > 60
     ? `${normalizedTitle.slice(0, 57)}…`
     : normalizedTitle;
+}
+
+function getLocalDayNumber(date: Date) {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+}
+
+function getHistoryDay(timestamp: string, today: Date) {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return { dateKey: "unknown", label: "Unknown date" };
+  }
+
+  const dateKey = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+  const daysAgo = getLocalDayNumber(today) - getLocalDayNumber(date);
+
+  if (daysAgo === 0) return { dateKey, label: "Today" };
+  if (daysAgo === 1) return { dateKey, label: "Yesterday" };
+
+  return {
+    dateKey,
+    label: new Intl.DateTimeFormat("en-US", {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      ...(date.getFullYear() === today.getFullYear() ? {} : { year: "numeric" }),
+    }).format(date),
+  };
+}
+
+function groupConversationsByDay(conversations: ConversationSummary[]) {
+  const today = new Date();
+  const groups = new Map<string, ConversationHistoryGroup>();
+
+  conversations.forEach((conversation) => {
+    const { dateKey, label } = getHistoryDay(conversation.updated_at, today);
+    const existingGroup = groups.get(dateKey);
+
+    if (existingGroup) {
+      existingGroup.conversations.push(conversation);
+      return;
+    }
+
+    groups.set(dateKey, {
+      dateKey,
+      label,
+      conversations: [conversation],
+    });
+  });
+
+  return Array.from(groups.values());
 }
 
 export default function Chat() {
@@ -92,6 +155,10 @@ export default function Chat() {
   const requestControllerRef = useRef<AbortController | null>(null);
   const messageIdRef = useRef(0);
   const isWelcome = messages.length === 0;
+  const conversationHistoryGroups = useMemo(
+    () => groupConversationsByDay(conversations),
+    [conversations],
+  );
 
   const displayName = useMemo(() => {
     const metadataName = user?.user_metadata?.name ?? user?.user_metadata?.full_name;
@@ -627,30 +694,50 @@ export default function Chat() {
               No previous chats
             </p>
           ) : (
-            <div className="space-y-1">
-              {conversations.map((conversationItem) => (
-                <button
-                  key={conversationItem.id}
-                  type="button"
-                  onClick={() => void loadConversation(conversationItem.id)}
-                  disabled={isHistoryLoading}
-                  title={conversationItem.title}
-                  className="w-full truncate rounded-lg px-2 py-2 text-left transition-colors"
-                  style={{
-                    background:
-                      activeConversationId === conversationItem.id
-                        ? "var(--surface-active)"
-                        : "transparent",
-                    color:
-                      activeConversationId === conversationItem.id
-                        ? "var(--foreground)"
-                        : "var(--text-secondary)",
-                    cursor: isHistoryLoading ? "wait" : "pointer",
-                    fontSize: "0.8125rem",
-                  }}
+            <div className="space-y-4">
+              {conversationHistoryGroups.map((group) => (
+                <section
+                  key={group.dateKey}
+                  aria-labelledby={`history-group-${group.dateKey}`}
                 >
-                  {conversationItem.title}
-                </button>
+                  <h3
+                    id={`history-group-${group.dateKey}`}
+                    className="px-2 pb-1"
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.7rem",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {group.label}
+                  </h3>
+                  <div className="space-y-1">
+                    {group.conversations.map((conversationItem) => (
+                      <button
+                        key={conversationItem.id}
+                        type="button"
+                        onClick={() => void loadConversation(conversationItem.id)}
+                        disabled={isHistoryLoading}
+                        title={conversationItem.title}
+                        className="w-full truncate rounded-lg px-2 py-2 text-left transition-colors"
+                        style={{
+                          background:
+                            activeConversationId === conversationItem.id
+                              ? "var(--surface-active)"
+                              : "transparent",
+                          color:
+                            activeConversationId === conversationItem.id
+                              ? "var(--foreground)"
+                              : "var(--text-secondary)",
+                          cursor: isHistoryLoading ? "wait" : "pointer",
+                          fontSize: "0.8125rem",
+                        }}
+                      >
+                        {conversationItem.title}
+                      </button>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           )}
@@ -974,7 +1061,24 @@ export default function Chat() {
                                 fontWeight: 600,
                               }}
                             >
-                              MindMate is working
+                              <span className="sr-only">{PROCESSING_LABEL}</span>
+                              <span aria-hidden="true" className="inline-flex">
+                                {PROCESSING_LABEL.split("").map((character, index) => (
+                                  <motion.span
+                                    key={`${character}-${index}`}
+                                    className="inline-block"
+                                    animate={{ y: [0, -2, 0], opacity: [0.55, 1, 0.55] }}
+                                    transition={{
+                                      duration: 1.1,
+                                      repeat: Infinity,
+                                      delay: index * 0.045,
+                                      ease: "easeInOut",
+                                    }}
+                                  >
+                                    {character === " " ? "\u00A0" : character}
+                                  </motion.span>
+                                ))}
+                              </span>
                             </span>
                           </div>
                           <div className="flex flex-shrink-0 items-center gap-1.5">
