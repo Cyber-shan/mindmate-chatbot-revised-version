@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "./admin/theme.css";
 
 :root,
 [data-theme="light"] {

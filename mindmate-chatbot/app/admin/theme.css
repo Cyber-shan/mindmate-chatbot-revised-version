@@ -1,0 +1,178 @@
+.admin-design {
+  --font-size: 16px;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --background: #FFFFFF;
+  --foreground: #111110;
+  --card: #F8F8F6;
+  --card-foreground: #111110;
+  --popover: #FFFFFF;
+  --popover-foreground: #111110;
+
+  --primary: #111110;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4F4F2;
+  --secondary-foreground: #111110;
+
+  --muted: #F4F4F2;
+  --muted-foreground: #4A4A47;
+
+  --accent: #EFEFED;
+  --accent-foreground: #111110;
+
+  --destructive: #C0392B;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E8E8E5;
+  --input: transparent;
+  --input-background: #F4F4F2;
+  --switch-background: #CECECA;
+  --ring: rgba(17, 17, 16, 0.35);
+
+  --radius: 0.75rem;
+  --admin-radius-sm: calc(var(--radius) - 4px);
+  --admin-radius-md: calc(var(--radius) - 2px);
+  --admin-radius-lg: var(--radius);
+  --admin-radius-xl: calc(var(--radius) + 4px);
+
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --sidebar: #F8F8F6;
+  --sidebar-foreground: #111110;
+  --sidebar-primary: #111110;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EFEFED;
+  --sidebar-accent-foreground: #111110;
+  --sidebar-border: #E8E8E5;
+  --sidebar-ring: rgba(17, 17, 16, 0.25);
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+}
+
+/* Keep the existing frontend's placeholder override outside the admin design. */
+.admin-design input::placeholder {
+  color: color-mix(in oklab, currentColor 50%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--admin-radius-sm, 0.25rem);
+  --radius-md: var(--admin-radius-md, 0.375rem);
+  --radius-lg: var(--admin-radius-lg, 0.5rem);
+  --radius-xl: var(--admin-radius-xl, 0.75rem);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  :where(.admin-design, .admin-design *) {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+
+  :where(.admin-design) {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: var(--font-size);
+    color-scheme: light;
+  }
+
+  :where(.admin-design) h1 {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+
+  :where(.admin-design) h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+  }
+
+  :where(.admin-design) h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+  }
+
+  :where(.admin-design) h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  :where(.admin-design) label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  :where(.admin-design) button {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+
+  :where(.admin-design) input, :where(.admin-design) textarea {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.6;
+  }
+
+  /* Thin custom scrollbar */
+  :where(.admin-design) ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  :where(.admin-design) ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  :where(.admin-design) ::-webkit-scrollbar-thumb {
+    background: #D8D8D4;
+    border-radius: 99px;
+  }
+  :where(.admin-design) ::-webkit-scrollbar-thumb:hover {
+    background: #B0B0AC;
+  }
+}

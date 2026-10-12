@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { readChatReply } from "@/lib/chat-stream";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Bot,
@@ -47,7 +48,6 @@ type StoredMessage = {
 };
 
 type ChatApiResponse = {
-  reply?: string;
   error?: string;
 };
 
@@ -302,6 +302,7 @@ export default function Chat() {
     let conversationId = activeConversationId;
     let createdConversation = false;
     let savedUserMessage = false;
+    let localAssistantMessageId: string | null = null;
 
     requestControllerRef.current = controller;
     setMessages(conversation);
@@ -394,8 +395,6 @@ export default function Chat() {
             : message,
         ),
       );
-      await refreshConversationHistory();
-
       if (controller.signal.aborted) return;
 
       setProgressStage("generating-response");
@@ -414,30 +413,33 @@ export default function Chat() {
         signal: controller.signal,
       });
 
-      const data = (await response.json()) as ChatApiResponse;
-
       if (!response.ok) {
+        const data = (await response.json()) as ChatApiResponse;
         throw new Error(data.error ?? "MindMate could not generate a response.");
       }
 
-      const reply = data.reply?.trim().slice(0, 4000);
+      const reply = await readChatReply(response, (content) => {
+        if (controller.signal.aborted) return;
+        if (!localAssistantMessageId) {
+          messageIdRef.current += 1;
+          const messageId = `local-${messageIdRef.current}`;
+          localAssistantMessageId = messageId;
+          setMessages((previousMessages) => [
+            ...previousMessages,
+            { id: messageId, role: "ai", text: content.trimStart() },
+          ]);
+        } else {
+          const messageId = localAssistantMessageId;
+          setMessages((previousMessages) =>
+            previousMessages.map((message) =>
+              message.id === messageId ? { ...message, text: content.trimStart() } : message,
+            ),
+          );
+        }
+      });
 
-      if (!reply) {
-        throw new Error("MindMate returned an empty response.");
-      }
-
+      if (controller.signal.aborted) return;
       setProgressStage("saving-response");
-
-      messageIdRef.current += 1;
-      const localAssistantMessageId = `local-${messageIdRef.current}`;
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        {
-          id: localAssistantMessageId,
-          role: "ai",
-          text: reply,
-        },
-      ]);
 
       const { data: storedAssistantMessage, error: assistantMessageError } = await supabase
         .from("messages")
@@ -456,7 +458,7 @@ export default function Chat() {
         setMessages((previousMessages) =>
           previousMessages.map((message) =>
             message.id === localAssistantMessageId
-              ? { ...message, id: storedAssistantMessage.id }
+              ? { ...message, id: storedAssistantMessage.id, text: reply }
               : message,
           ),
         );
@@ -465,6 +467,12 @@ export default function Chat() {
       await refreshConversationHistory();
     } catch (error) {
       if (controller.signal.aborted) return;
+
+      if (localAssistantMessageId) {
+        setMessages((previousMessages) =>
+          previousMessages.filter((message) => message.id !== localAssistantMessageId),
+        );
+      }
 
       if (!savedUserMessage) {
         setMessages((previousMessages) =>
