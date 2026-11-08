@@ -1,4 +1,8 @@
-"""Train a practice academic-stress classifier from data/messages.csv."""
+"""Train a practice English academic-stress classifier from a reviewed export.
+
+Target: The student expresses current stress connected to academic demands.
+See ANNOTATION_GUIDE.md for the intended labels and review rules.
+"""
 
 import argparse
 import hashlib
@@ -17,18 +21,28 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import GroupShuffleSplit, train_test_split
 from sklearn.pipeline import Pipeline
 
+from task_definition import (
+    ANNOTATION_UNIT,
+    LABEL_DEFINITIONS,
+    LABELS,
+    LANGUAGE_SCOPE,
+    SCOPE_NOTE,
+    TARGET_DEFINITION,
+    TASK_DEFINITION_VERSION,
+)
+
+from review_dataset import DEFAULT_BATCH, verified_training_path
+
 ROOT = Path(__file__).resolve().parent
-DATA_PATH = ROOT / "data" / "messages.csv"
-LABELS = ["not_academic_stress", "academic_stress"]
 SEED = 42
 
 
-def load_data():
+def load_data(data_path):
     """Check the CSV without changing the original file."""
-    if not DATA_PATH.is_file():
-        raise ValueError(f"Dataset not found. Put your CSV at: {DATA_PATH}")
+    if not data_path.is_file():
+        raise ValueError(f"Dataset not found: {data_path}")
 
-    data = pd.read_csv(DATA_PATH, encoding="utf-8-sig", dtype=str,
+    data = pd.read_csv(data_path, encoding="utf-8-sig", dtype=str,
                        keep_default_na=False)
     data.columns = data.columns.str.strip()
     if not {"text", "label"}.issubset(data.columns):
@@ -131,9 +145,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--test", action="store_true",
                         help="Also evaluate the final test set after choices are fixed.")
+    parser.add_argument("--review-batch", type=Path, default=DEFAULT_BATCH,
+                        help="Completed annotation batch containing the verified training export.")
     args = parser.parse_args()
 
-    data = load_data()
+    print("Target:", TARGET_DEFINITION)
+    print(SCOPE_NOTE)
+    print("Annotation rules: ANNOTATION_GUIDE.md; completed human review required.")
+    try:
+        data_path, review_receipt = verified_training_path(args.review_batch.resolve())
+    except (OSError, ValueError, KeyError) as error:
+        raise ValueError("Complete independent review, comparison, and human adjudication "
+                         "with review_dataset.py before training. " + str(error)) from error
+    data = load_data(data_path)
     train, validation, test = split_data(data)
     print("\nPractice model: small/synthetic datasets do not establish reliability.")
 
@@ -171,7 +195,17 @@ def main():
     metadata = {
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "purpose": "Experimental message classification for MindMate",
-        "data_sha256": hashlib.sha256(DATA_PATH.read_bytes()).hexdigest(),
+        # Provenance records submitted review, not annotation accuracy or reliability.
+        "task_definition": {
+            "version": TASK_DEFINITION_VERSION,
+            "target": TARGET_DEFINITION,
+            "language": LANGUAGE_SCOPE,
+            "annotation_unit": ANNOTATION_UNIT,
+            "labels": LABEL_DEFINITIONS,
+            "annotation_compliance": "completed_recorded_human_review_with_ai_subset",
+        },
+        "data_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+        "annotation_review": review_receipt,
         "seed": SEED,
         "split_counts": {"train": len(train), "validation": len(validation), "test": len(test)},
         "grouped": "group_id" in data.columns,
