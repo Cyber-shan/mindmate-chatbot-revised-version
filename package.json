@@ -1,0 +1,8 @@
+{
+  "name": "mindmate-project",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix mindmate-chatbot run dev --",
+    "demo": "npm --prefix mindmate-chatbot run demo --"
+  }
+}

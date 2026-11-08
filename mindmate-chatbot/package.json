@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/start-local.mjs",
+    "dev:next": "next dev",
+    "demo": "node scripts/start-local.mjs --demo",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

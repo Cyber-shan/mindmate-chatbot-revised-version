@@ -1,5 +1,7 @@
 # Local chatbot
 
+Start the complete local setup from the main project folder or this folder with `npm.cmd run dev`. For an optimized defense presentation, use `npm.cmd run demo`. These commands prepare the required services and model automatically; `demo` also builds when source or build settings have changed. See [DEMO_SETUP.md](DEMO_SETUP.md).
+
 The chat API now runs the hybrid support-priority policy before generation. See [SUPPORT_SETUP.md](SUPPORT_SETUP.md) for safety rules, the optional TF-IDF/Logistic Regression service, clinician-review requirements, and private review-queue configuration.
 
 MindMate defaults to **Qwen3.5 4B**, served by Ollama. Install the model on the machine running Ollama:
@@ -20,7 +22,7 @@ Replies stream into the chat bubble as text is generated. Only completed replies
 
 To reduce latency and memory use, the API disables thinking, uses a 2,048-token context, sends at most eight recent messages within a 6,000-character budget, and generates at most 256 tokens. Older messages remain in the database. The model stays loaded for 30 minutes after use, configurable through `OLLAMA_KEEP_ALIVE`. Generation times out after 60 seconds and displays an error instead of leaving the progress indicator running indefinitely. Response speed still depends on hardware, prompt length, and whether the model needs to load.
 
-Before a demonstration, prepare the installed model and its prompt-processing path:
+The one-command launcher prepares the model automatically. To prepare it separately for diagnostics or after a long idle period:
 
 ```powershell
 npm.cmd run warmup:chat

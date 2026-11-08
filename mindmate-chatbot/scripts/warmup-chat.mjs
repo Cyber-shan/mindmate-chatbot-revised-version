@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { getOllamaConfig, SYSTEM_PROMPT } from "../lib/chat-config.ts";
 
 const require = createRequire(import.meta.url);
-require("@next/env").loadEnvConfig(process.cwd(), true, { info() {}, error() {} });
+require("@next/env").loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production", { info() {}, error() {} });
 const config = getOllamaConfig();
 if (!["127.0.0.1", "localhost", "[::1]"].includes(new URL(config.url).hostname)) {
   throw new Error("Demo warm-up is restricted to the configured local Ollama service.");

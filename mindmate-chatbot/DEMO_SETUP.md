@@ -4,20 +4,23 @@ This prototype uses the installed **Qwen3.5 4B** model through local Ollama. No 
 
 ## Prepare before presenting
 
-Open Docker Desktop and Ollama. From this project directory:
+From either `Mindmate-Project` or `mindmate-chatbot`, run this one command:
 
 ```powershell
-npx.cmd supabase start
-npm.cmd run build
-npm.cmd run warmup:chat
-npm.cmd run start
+npm.cmd run demo
 ```
 
-Wait for the warm-up to report `"ready":true` before starting the chat demonstration. Use the production build for the defense to avoid development-time compilation during the presentation. Build again only when code or build-time environment settings change.
+The launcher checks the local services, starts Docker Desktop on Windows when needed, starts/reuses Supabase and Ollama, and prepares the installed model. It creates the production build when needed, then starts MindMate. Unchanged builds are reused; source, dependency and build-setting changes are detected automatically. Wait for the terminal to show the application address before presenting.
+
+For everyday editing, use `npm.cmd run dev` instead. This performs the same service preparation and starts development mode with automatic code reloading. There is no separate build or warm-up command to remember.
+
+Docker Desktop must have completed its initial installation/setup, and Ollama, project dependencies and the configured Qwen model must already be installed. The launcher reuses running services, so they do not need to be opened manually each time. Existing environment settings are read from `mindmate-chatbot/.env.local`.
 
 Open http://localhost:3000/chat and sign in with your prototype account. This project's Supabase Studio is at http://127.0.0.1:55123; its API is at http://127.0.0.1:55121. The model runs locally at http://127.0.0.1:11434.
 
-The model stays ready for 30 minutes after use. Repeat `npm.cmd run warmup:chat` after restarting Ollama or after a longer idle period. Keep the laptop plugged in for consistent performance. Other GPU workloads and laptop power/thermal conditions can affect speed.
+The model stays ready for 30 minutes after use. Each launcher run prepares it automatically. The standalone `npm.cmd run warmup:chat` remains available if you leave the app open but let the model go idle before presenting. Keep the laptop plugged in for consistent performance. Other GPU workloads and laptop power/thermal conditions can affect speed.
+
+Press Ctrl+C to stop the app. The launcher also stops an Ollama server it started itself. Existing Ollama sessions, Docker Desktop and Supabase containers are kept available for reuse. Database volumes are preserved.
 
 ## Verify the demonstration
 
