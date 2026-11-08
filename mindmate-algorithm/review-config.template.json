@@ -1,0 +1,17 @@
+{
+  "reviewer": null,
+  "reviewed_at": null,
+  "dataset_version": null,
+  "dataset_sha256": null,
+  "approved_for_release": false,
+  "confidence": null,
+  "target_immediate_recall": null,
+  "target_combined_recall": null,
+  "minimum_macro_f1": null,
+  "minimum_immediate_recall": null,
+  "minimum_combined_recall": null,
+  "maximum_critical_false_negative_rate": null,
+  "maximum_ece": null,
+  "minimum_subgroup_size": null,
+  "required_subgroups": []
+}
