@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { POST } from "../app/api/chat/route.ts";
 import { readChatReply } from "../lib/chat-stream.ts";
+import { IMMEDIATE_LANGUAGE_MESSAGES } from "./fixtures/support-language.mjs";
 
 const encoder = new TextEncoder();
 const request = (messages, signal) => new Request("http://localhost/api/chat", {
@@ -68,6 +69,24 @@ test("immediate safety replies bypass Ollama even when it is unavailable", async
   assert.equal(support[0].review_status, "unavailable");
   assert.equal("confidence" in support[0], false);
   assert.equal("model" in support[0], false);
+});
+
+test("student chat handles all informal immediate-safety variants with both model services unavailable", async (t) => {
+  const before = process.env.DISTRESS_CLASSIFIER_URL;
+  process.env.DISTRESS_CLASSIFIER_URL = "http://127.0.0.1:1";
+  t.after(() => { if (before === undefined) delete process.env.DISTRESS_CLASSIFIER_URL; else process.env.DISTRESS_CLASSIFIER_URL = before; });
+  const fetch = t.mock.method(globalThis, "fetch", () => { throw new Error("Neither classifier nor Ollama should be called"); });
+  for (const message of IMMEDIATE_LANGUAGE_MESSAGES) {
+    const response = await POST(request([{ role: "user", content: message }]));
+    assert.equal(response.status, 200, message);
+    const support = [];
+    const reply = await readChatReply(response, () => {}, (value) => support.push(value));
+    assert.match(reply, /Are you safe right now/, message);
+    assert.equal(support[0].safety_response_required, true, message);
+    assert.equal(support[0].review_status, "unavailable");
+    assert.equal("confidence" in support[0], false);
+  }
+  assert.equal(fetch.mock.callCount(), 0);
 });
 
 test("uses safety context outside the eight-message generation window", async (t) => {

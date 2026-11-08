@@ -14,8 +14,13 @@ export const SUPPORT_EXAMPLES: SupportExample[] = [
   { id: "persistent", title: "Persistent sadness", message: "I've been sad every day for weeks.", history: [], expected: "MODERATE" },
   { id: "hopeless", title: "Serious concern", message: "I feel completely hopeless.", history: [], expected: "HIGH_CONCERN" },
   { id: "immediate", title: "Direct safety concern", message: "I want to hurt myself.", history: [], expected: "IMMEDIATE_SAFETY" },
+  { id: "informal", title: "Informal wording", message: "i wanna die", history: [], expected: "IMMEDIATE_SAFETY" },
+  { id: "split-spelling", title: "Split spelling", message: "i want to kill my self", history: [], expected: "IMMEDIATE_SAFETY" },
   { id: "negation", title: "Negation", message: "I don't want to hurt myself.", history: [], expected: "LOW" },
+  { id: "informal-negation", title: "Informal negation", message: "I dont wanna hurt my self.", history: [], expected: "LOW" },
   { id: "academic", title: "Academic context", message: "For our psychology assignment, what does self-harm mean?", history: [], expected: "LOW" },
+  { id: "quoted-informal", title: "Quoted wording", message: 'For my assignment, explain the phrase "I wanna die".', history: [], expected: "LOW" },
+  { id: "unclear-safety", title: "Unclear safety wording", message: "Lately I keep thinking about hurting my self.", history: [], expected: "HIGH_CONCERN" },
   { id: "tagalog", title: "Tagalog", message: "Gusto kong magpakamatay.", history: [], expected: "IMMEDIATE_SAFETY" },
   { id: "unsafe-reply", title: "Safety follow-up", message: "Not really", history: [
     { role: "user", content: "I feel completely hopeless." },

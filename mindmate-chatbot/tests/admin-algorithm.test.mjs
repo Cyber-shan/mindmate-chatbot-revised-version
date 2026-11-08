@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { POST } from "../app/api/admin/algorithm/route.ts";
 import { SUPPORT_EXAMPLES } from "../lib/support/examples.ts";
 import { prioritize } from "../lib/support/policy.ts";
+import { CONTEXT_LANGUAGE_CASES, IMMEDIATE_LANGUAGE_MESSAGES } from "./fixtures/support-language.mjs";
 
 const request = (body) => new Request("http://localhost/api/admin/algorithm", {
   method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -32,6 +33,25 @@ for (const example of SUPPORT_EXAMPLES) {
     assert.equal(fetch.mock.callCount(), 0);
   });
 }
+
+test("admin testing preserves original wording and handles informal safety language and context", async (t) => {
+  rulesOnly(t);
+  const fetch = t.mock.method(globalThis, "fetch", () => { throw new Error("The rules-only tester must not use external services"); });
+  const cases = [...IMMEDIATE_LANGUAGE_MESSAGES.map((message) => [message, "IMMEDIATE_SAFETY"]), ...CONTEXT_LANGUAGE_CASES];
+  for (const [message, expected] of cases) {
+    const response = await POST(request({ message }));
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.evaluated_message, message);
+    assert.equal(result.decision.level, expected, message);
+    const needsSafety = ["HIGH_CONCERN", "IMMEDIATE_SAFETY"].includes(expected);
+    assert.equal(result.decision.safety_response_required, needsSafety, message);
+    assert.equal(result.decision.requires_human_review, needsSafety, message);
+    assert.equal(Boolean(result.response_preview), needsSafety, message);
+    assert.equal(result.decision.confidence, null);
+  }
+  assert.equal(fetch.mock.callCount(), 0);
+});
 
 test("admin testing rejects malformed, empty, oversized and invalid context inputs", async (t) => {
   rulesOnly(t);

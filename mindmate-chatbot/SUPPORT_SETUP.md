@@ -54,13 +54,15 @@ The previous sample overview remains at `/admin/overview`; sample reports and sa
 
 Start the project with `npm.cmd run dev`, open the existing login page, and click **Admin sign in**, or visit http://localhost:3000/admin directly. Choose an example or type a test message, then click **Analyze message**. The result shows the support category, source, matched rule IDs, safety and human-review requirements, conversation state, available model confidence and a fixed safety-response preview when applicable.
 
-Use **Include a previous safety question** to test short replies in context. For example, "Not really" after "Are you safe right now?" should select `IMMEDIATE_SAFETY`. **Run all 9 examples** evaluates each synthetic case through the running endpoint and compares actual outcomes with expected labels. The structured decision JSON is expandable for the defense demonstration.
+Use **Include a previous safety question** to test short replies in context. For example, "Not really" after "Are you safe right now?" should select `IMMEDIATE_SAFETY`. **Run all examples** evaluates each synthetic case through the running endpoint and compares actual outcomes with expected labels, including informal wording, split spellings, negation and quotations. The structured decision JSON is expandable for the defense demonstration.
 
 The tester calls `POST /api/admin/algorithm`, which delegates to `assessSupport`, also used by `POST /api/chat`. Immediate safety signals bypass ML. Other messages use a reviewed classifier only when one is configured and available. Rules-only results display confidence as unavailable; no synthetic confidence scores are invented. Passing the built-in examples verifies these cases, not population-level accuracy or clinical validity.
 
 ## Rule maintenance and verification
 
 Rules are versioned in [`lib/support/rules.json`](lib/support/rules.json), marked `requires_clinician_review`. Reviewers should update the version, approval metadata and regression cases when changing them. Do not mark draft rules clinically approved merely because software tests pass. The context heuristics are bounded engineering safeguards; they do not establish that a student is safe.
+
+The `v2` draft uses a separate matching copy to recognize selected informal forms (`wanna`, `wana`, `gonna`, `want 2`, missing apostrophes and `my self`/`my-self`). Original messages stay intact for display, storage and the optional classifier. Negations remain in the matching text. Each safety phrase is checked for its own negation, quotation, historical and third-party context; a denial or educational quotation cannot suppress a separate disclosure elsewhere. Unmatched safety phrases can raise priority even when another part of the message matched a lower-priority rule. These are explicit language rules, not general semantic understanding or a newly trained ML model.
 
 ```powershell
 npm.cmd test
@@ -69,7 +71,7 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-With a local server running, `node scripts/verify-support-runtime.mjs http://127.0.0.1:3000` checks three safety-response paths over HTTP without creating database records. To verify independence from both model services, start that server with `OLLAMA_URL` and `DISTRESS_CLASSIFIER_URL` pointing to an unavailable local port.
+With a local server running, `node scripts/verify-support-runtime.mjs http://127.0.0.1:3000` checks seven safety-response cases over HTTP, including the four reported wording examples, without creating database records. To verify independence from both model services, start that server with `OLLAMA_URL` and `DISTRESS_CLASSIFIER_URL` pointing to an unavailable local port.
 
 The Node suite covers safety-rule/model disagreement, negation, historical and third-person context, academic quotations, selected Tagalog/code-switched phrases, obfuscation, uncertainty, conversation replies, database authorization and failures, stream behavior and Ollama bypass. The Python suite covers grouped leakage prevention, calibrated training, class-order mapping, threshold selection, evaluation gates and HTTP errors. Tests train temporary **synthetic fixtures**, not a release model. GitHub Actions runs both suites through [the safety workflow](../.github/workflows/support-safety.yml).
 

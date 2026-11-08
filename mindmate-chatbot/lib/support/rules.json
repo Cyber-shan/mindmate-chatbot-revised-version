@@ -1,5 +1,5 @@
 {
-  "version": "mindmate-safety-rules-v1-draft",
+  "version": "mindmate-safety-rules-v2-draft",
   "review_status": "requires_clinician_review",
   "reviewer": null,
   "rules": [
@@ -20,11 +20,11 @@
       "level": "IMMEDIATE_SAFETY",
       "patterns": [
         "\\bi (?:really |just )?(?:want|plan|intend|need|am going|am about) to (?:kill|hurt|harm|cut) myself\\b",
-        "\\bi(?:'m| am) (?:going|planning|about) to (?:kill|hurt|harm|cut) myself\\b",
+        "\\bi(?:'m| am) (?:going|planning|about) to (?:(?:kill|hurt|harm|cut|unalive) myself|die|end my (?:own )?life|take my (?:own )?life|commit suicide)\\b",
         "\\bi (?:will|might|may|could) (?:kill|hurt|harm|cut) myself\\b",
         "\\bi(?:'ll| will) (?:end|take) my (?:own )?life\\b",
-        "\\bi (?:want|plan|intend|am going) to (?:die|end my life|take my own life|commit suicide)\\b",
-        "\\bi(?:'m| am) (?:thinking (?:about|of)|considering) (?:suicide|killing myself|hurting myself|ending my life)\\b",
+        "\\bi (?:really |just )?(?:want|plan|intend|need|am going|am about) to (?:die|end my (?:own )?life|take my (?:own )?life|commit suicide)\\b",
+        "\\bi(?:'m| am) (?:thinking (?:about|of)|considering) (?:suicide|killing myself|hurting myself|ending my (?:own )?life)\\b",
         "\\bi(?:'m| am) suicidal\\b",
         "\\bi(?:'m| am) not safe\\b",
         "\\bi (?:want|plan|intend|am going) to (?:unalive myself|kms)\\b",
@@ -63,6 +63,23 @@
         "\\bi(?:'ve| have)? (?:been |feel |felt |am |'m )*(?:sad|anxious|stressed|overwhelmed|crying|panicking|depressed).{0,65}\\b(?:every day|everyday|for weeks|for months|all the time|for days)\\b",
         "\\bi (?:cannot|can't|cant) (?:sleep|concentrate|stop crying)\\b",
         "\\b(?:lagi|palagi) (?:akong?|ko) (?:malungkot|kinakabahan|umiiyak)\\b"
+      ]
+    },
+    {
+      "id": "third_party_safety_concern",
+      "level": "HIGH_CONCERN",
+      "patterns": [
+        "\\b(?:hurt|kill|harm|hurting|killing|harming) (?:himself|herself|themselves)\\b",
+        "\\b(?:he|she|they|my (?:friend|classmate|sister|brother|partner)) (?:wants?|plans?|intends?) to (?:die|commit suicide|end (?:his|her|their) (?:own )?life)\\b"
+      ]
+    },
+    {
+      "id": "ambiguous_safety_language",
+      "level": "HIGH_CONCERN",
+      "patterns": [
+        "\\b(?:suicid(?:e|al)|self[- ]harm|magpakamatay)\\b",
+        "\\b(?:kill|hurt|harm|cut|unalive|killing|hurting|harming|cutting) myself\\b",
+        "\\b(?:want(?:ed|ing)?|wish(?:ed|ing)?|need(?:ed|ing)?) to (?:die|end my (?:own )?life|take my (?:own )?life)\\b"
       ]
     }
   ]

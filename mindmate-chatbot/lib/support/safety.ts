@@ -4,18 +4,37 @@ import { higher, type ChatMessage, type ConversationState, type SafetySignal, ty
 export const ruleVersion = config.version;
 export const ruleReviewStatus = config.review_status;
 
+const informalWords: Record<string, string> = {
+  wanna: "want to", wana: "want to", gonna: "going to", idk: "i don't know",
+  im: "i'm", ive: "i've", dont: "don't", doesnt: "doesn't", cant: "can't", wont: "won't",
+  didnt: "didn't", wouldnt: "wouldn't", couldnt: "couldn't", shouldnt: "shouldn't",
+  isnt: "isn't", arent: "aren't", wasnt: "wasn't", werent: "weren't",
+  havent: "haven't", hasnt: "hasn't", hadnt: "hadn't",
+};
+const informalPattern = new RegExp(`\\b(?:${Object.keys(informalWords).join("|")})\\b`, "g");
+
 /** Preserve negation and punctuation; use a separate normalized copy for matching. */
 export function normalize(text: string): string {
   return text.normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/[\u2018\u2019]/g, "'").toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').toLowerCase()
+    .replace(/\s+/g, " ").trim()
+    .replace(informalPattern, (word) => informalWords[word])
+    .replace(/\bwant 2\b/g, "want to")
+    // Join reflexive spellings without changing compounds such as "my self esteem".
+    .replace(/\b(my|your|him|her)[ -]+self\b(?![ -]+(?:esteem|confidence|care|image|worth|respect|control|expression|portrait|awareness)\b)/g, "$1self")
+    .replace(/\bthem[ -]+selves\b/g, "themselves")
     .replace(/\bk1ll\b/g, "kill").replace(/\bsu[1i]c[1i]de\b/g, "suicide")
-    .replace(/\s+/g, " ").trim();
+    .trim();
 }
 
 const compiledRules = config.rules.map((rule) => ({
   ...rule, level: rule.level as SupportLevel,
+  fallback: rule.id === "ambiguous_safety_language",
+  current_action: "current_action" in rule && rule.current_action === true,
   patterns: rule.patterns.map((pattern) => new RegExp(pattern, "g")),
 }));
+const primaryRules = compiledRules.filter((rule) => !rule.fallback);
+const fallbackRules = compiledRules.filter((rule) => rule.fallback);
 const academic = /\b(?:assignment|psychology class|research paper|define|definition|what does|what is|lyrics|song|movie|novel|quotation)\b/;
 const historical = /\b(?:used to|years? ago|last year|yesterday|last night|in the past|back then|dati|noon)\b/;
 const current = /\b(?:now|today|tonight|currently|again|ngayon|mamaya)\b/;
@@ -24,7 +43,46 @@ const thirdParty = /\b(?:my (?:friend|classmate|sister|brother|partner)|he|she|t
 
 function negated(prefix: string): boolean {
   // Scope negation to the current clause, never to the whole message.
-  return /\b(?:not|never|don't|do not|didn't|did not|wouldn't|would not|won't|will not|no intention to|ayaw|hindi)\b[^.!?;,:]{0,32}$/.test(prefix);
+  // Uncertainty about a safety disclosure is not a denial of that disclosure.
+  const scope = prefix.replace(/\b(?:don't|do not|doesn't|does not|didn't|did not) know (?:if|whether)\b|\bnot (?:sure|certain) (?:if|whether)\b/g, "uncertain whether");
+  return /\b(?:not|never|don't|do not|doesn't|does not|didn't|did not|isn't|is not|aren't|are not|wasn't|was not|weren't|were not|wouldn't|would not|won't|will not|no intention to|ayaw|hindi)\b[^.!?;,:]{0,32}$/.test(scope);
+}
+
+function insideQuote(prefix: string): boolean {
+  let single = false;
+  let double = false;
+  for (let index = 0; index < prefix.length; index += 1) {
+    const character = prefix[index];
+    if (character === '"' && !single) double = !double;
+    if (character !== "'" || double) continue;
+    // Apostrophes within contractions are not quotation boundaries.
+    if (/[a-z0-9]/.test(prefix[index - 1] ?? "") && /[a-z0-9]/.test(prefix[index + 1] ?? "")) continue;
+    if (single) single = false;
+    else if (index === 0 || /[\s(:,]/.test(prefix[index - 1])) single = true;
+  }
+  return single || double;
+}
+
+function matchContext(text: string, index: number, length: number) {
+  const sentenceStart = Math.max(text.lastIndexOf(".", index - 1), text.lastIndexOf("!", index - 1), text.lastIndexOf("?", index - 1), text.lastIndexOf(";", index - 1)) + 1;
+  const sentencePrefix = text.slice(sentenceStart, index);
+  let start = sentenceStart;
+  // A separate first-person clause starts its own negation and subject scope.
+  const contrast = [...text.slice(sentenceStart, index + 1).matchAll(/\b(?:but|however|yet)\b|\band\s+(?=i\b)/g)].at(-1);
+  if (contrast) start += contrast.index + contrast[0].length;
+  const endIndex = text.slice(index + length).search(/[.!?;]/);
+  const end = endIndex < 0 ? text.length : index + length + endIndex;
+  const clause = text.slice(start, end);
+  const prefix = text.slice(start, index);
+  const quoted = insideQuote(sentencePrefix);
+  return {
+    prefix, clause,
+    negated: negated(prefix),
+    historical: historical.test(prefix) || (historical.test(clause) && safeNow.test(clause)),
+    thirdParty: thirdParty.test(prefix) || (quoted && thirdParty.test(sentencePrefix)),
+    academic: (academic.test(text.slice(sentenceStart, end)) && quoted)
+      || (academic.test(prefix) && /\b(?:phrase|sentence|example|means?)\b/.test(prefix)),
+  };
 }
 
 export function analyzeSafety(message: string): SafetySignal {
@@ -33,57 +91,40 @@ export function analyzeSafety(message: string): SafetySignal {
     level: "LOW", matched_rules: [], current_action: false,
     direct_intent: false, first_person_concern: false, temporal_immediacy: current.test(text), contexts: [],
   };
-  for (const rule of compiledRules) {
+  const covered: { start: number; end: number }[] = [];
+  const applyRule = (rule: typeof compiledRules[number]) => {
     for (const pattern of rule.patterns) {
       for (const match of text.matchAll(pattern)) {
         const index = match.index;
-        let start = Math.max(text.lastIndexOf(".", index - 1), text.lastIndexOf("!", index - 1), text.lastIndexOf("?", index - 1), text.lastIndexOf(";", index - 1)) + 1;
-        const contrast = [...text.slice(start, index).matchAll(/\b(?:but|however|yet)\b/g)].at(-1);
-        if (contrast) start += contrast.index + contrast[0].length;
-        const endIndex = text.slice(index + match[0].length).search(/[.!?;]/);
-        const end = endIndex < 0 ? text.length : index + match[0].length + endIndex;
-        const clause = text.slice(start, end);
-        const prefix = text.slice(start, index);
-        // Exclude a preceding negation only when the rule does not itself encode it.
-        const isNegated = negated(prefix);
-        const isPast = historical.test(prefix) || (historical.test(clause) && safeNow.test(clause));
-        const isThirdParty = thirdParty.test(prefix);
-        // Academic framing only applies inside a quote or when no personal disclosure is present.
-        const quoteOpen = (prefix.match(/"/g)?.length ?? 0) % 2 === 1 || /(?:^|[\s,:])'[^']*$/.test(prefix);
-        const isAcademic = (academic.test(clause) && quoteOpen) || (academic.test(prefix) && /\b(?:phrase|sentence|example|means?)\b/.test(prefix));
-        if (isNegated) { signal.contexts.push("negated"); continue; }
-        if (isAcademic) { signal.contexts.push("academic_or_quoted"); continue; }
+        if (rule.fallback && covered.some((range) => range.start <= index && range.end >= index + match[0].length)) continue;
+        const context = matchContext(text, index, match[0].length);
+        if (context.negated) { signal.contexts.push("negated"); continue; }
+        const explicitOther = rule.id === "third_party_safety_concern";
+        const educational = (rule.fallback || explicitOther) && academic.test(context.clause) && !/\bi\b/.test(context.clause);
+        if (context.academic || educational) { signal.contexts.push("academic_or_quoted"); continue; }
+        if (/cut myself$/.test(match[0]) && /^ a (?:slice|piece) of (?:cake|pie|bread)\b/.test(text.slice(index + match[0].length))) {
+          signal.contexts.push("ordinary_expression"); continue;
+        }
         let level = rule.level;
-        if (isThirdParty) { level = "HIGH_CONCERN"; signal.contexts.push("third_party"); }
-        else if (isPast && !current.test(prefix.replace(safeNow, ""))) {
+        const other = explicitOther || context.thirdParty;
+        if (other) { level = "HIGH_CONCERN"; signal.contexts.push("third_party"); }
+        else if (context.historical && !current.test(context.prefix.replace(safeNow, ""))) {
           level = "HIGH_CONCERN"; signal.contexts.push("historical");
         }
         signal.level = higher(signal.level, level);
-        if (!isThirdParty && (level === "HIGH_CONCERN" || level === "IMMEDIATE_SAFETY")) signal.first_person_concern = true;
+        if (!other && (level === "HIGH_CONCERN" || level === "IMMEDIATE_SAFETY")) signal.first_person_concern = true;
         signal.matched_rules.push(rule.id);
+        if (!rule.fallback && (level === "HIGH_CONCERN" || level === "IMMEDIATE_SAFETY")) covered.push({ start: index, end: index + match[0].length });
         if (level === "IMMEDIATE_SAFETY") {
           signal.current_action ||= rule.current_action === true;
           signal.direct_intent ||= rule.id === "direct_self_harm_intent";
         }
       }
     }
-  }
-  if (/\b(?:he|she|they|my (?:friend|sister|brother|classmate))\b.{0,45}\b(?:hurt|kill|harm|hurting|killing|harming) (?:himself|herself|themselves)\b/.test(text) && !academic.test(text)) {
-    signal.level = higher(signal.level, "HIGH_CONCERN");
-    signal.matched_rules.push("third_party_safety_concern");
-    signal.contexts.push("third_party");
-  }
-  // Explicit third-person vocabulary and non-intent mentions require context, not automatic emergency escalation.
-  if (!signal.matched_rules.length && /\b(?:suicid(?:e|al)|self[- ]harm|kill myself|hurt myself|hurting myself|magpakamatay)\b/.test(text)) {
-    const educational = academic.test(text) && !/\bi (?:want|am|'m|feel|plan|will|might|have)\b/.test(text);
-    const denial = /\bi (?:do not|don't|dont|never|would never|will not|won't) (?:want to |intend to )?(?:hurt|kill|harm) myself\b|\bi(?:'m| am) not suicidal\b/.test(text);
-    if (!educational && !denial && !signal.contexts.includes("academic_or_quoted")) {
-      signal.level = "HIGH_CONCERN";
-      signal.matched_rules.push("ambiguous_safety_language");
-      if (thirdParty.test(text)) signal.contexts.push("third_party");
-      else signal.first_person_concern = true;
-    }
-  }
+  };
+  for (const rule of primaryRules) applyRule(rule);
+  // Assess unmatched safety phrases locally, even when another clause matched a lower rule.
+  for (const rule of fallbackRules) applyRule(rule);
   signal.matched_rules = [...new Set(signal.matched_rules)];
   signal.contexts = [...new Set(signal.contexts)];
   return signal;

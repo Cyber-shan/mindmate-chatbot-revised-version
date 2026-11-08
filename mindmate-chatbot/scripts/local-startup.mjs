@@ -25,6 +25,30 @@ export async function waitUntil(check, {
   throw new Error(`${description} did not become ready. Open the application to check its startup status, then retry.`);
 }
 
+/** Docker can accept commands before its restored database container is healthy. */
+export async function startSupabaseWithRetry(start, {
+  ready = async () => false, log = () => {}, signal,
+  timeoutMs = 180_000, intervalMs = 2000, now, pause,
+} = {}) {
+  let waiting = false;
+  await waitUntil(async () => {
+    if (await ready()) return true;
+    try {
+      await start();
+      return true;
+    } catch (error) {
+      // The CLI exits nonzero while an existing database is still booting.
+      // Other failures (unhealthy containers, occupied ports, etc.) need attention.
+      if (!/container is not ready:\s*starting\b/i.test(error?.message ?? "")) throw error;
+      if (!waiting) {
+        log("Supabase database is still starting; waiting and retrying automatically...");
+        waiting = true;
+      }
+      return false;
+    }
+  }, { description: "Supabase database", signal, timeoutMs, intervalMs, now, pause });
+}
+
 /** Independent services start together; generation warm-up waits for both to be ready. */
 export async function prepareLocalServices({
   supabaseReady, ensureDocker, startSupabase, ollamaReady, startOllama, warmup,
@@ -35,7 +59,7 @@ export async function prepareLocalServices({
       if (await supabaseReady()) { log("Supabase is already ready."); return; }
       await ensureDocker();
       log("Starting Supabase; initial startup can take a few minutes...");
-      await startSupabase();
+      await startSupabaseWithRetry(startSupabase, { ready: supabaseReady, signal, log });
       await waitUntil(supabaseReady, { description: "Supabase", signal, timeoutMs: 30_000 });
       log("Supabase is ready.");
     })(),

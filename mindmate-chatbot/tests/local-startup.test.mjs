@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { buildFingerprint, hiddenWindowsLaunchArgs, prepareLocalServices, requireLocalHttpUrl, safeStartupOutput, waitUntil } from "../scripts/local-startup.mjs";
+import { buildFingerprint, hiddenWindowsLaunchArgs, prepareLocalServices, requireLocalHttpUrl, safeStartupOutput, startSupabaseWithRetry, waitUntil } from "../scripts/local-startup.mjs";
 
 test("the local launcher accepts loopback services and rejects external or credential-bearing URLs", () => {
   for (const url of ["http://127.0.0.1:55121", "http://localhost:11434", "http://[::1]:11434"]) assert.ok(requireLocalHttpUrl(url, "Service"));
@@ -46,6 +46,94 @@ test("a failed required service prevents warm-up instead of pretending startup s
     startOllama: async () => {}, warmup: async () => { warmed = true; },
   }), /Database failed/);
   assert.equal(warmed, false);
+});
+
+const startingDatabaseError = () => new Error('node.exe stopped (1).\n{"_tag":"Error","error":{"code":"LegacyStatusDbNotReadyError","message":"supabase_db_mindmate-chatbot container is not ready: starting"}}');
+
+test("the launcher reaches model warm-up after a transient database startup failure", async () => {
+  let database = false;
+  let attempts = 0;
+  let warmed = false;
+  await prepareLocalServices({
+    supabaseReady: async () => database, ollamaReady: async () => true,
+    ensureDocker: async () => {},
+    startSupabase: async () => {
+      attempts += 1;
+      if (attempts === 1) throw startingDatabaseError();
+      database = true;
+    },
+    startOllama: async () => assert.fail("The running Ollama service must be reused"),
+    warmup: async () => { assert.equal(database, true); warmed = true; },
+  });
+  assert.equal(attempts, 2);
+  assert.equal(warmed, true);
+});
+
+test("a booting Supabase database is retried until startup succeeds in the same launch", async () => {
+  let time = 0;
+  let attempts = 0;
+  const messages = [];
+  await startSupabaseWithRetry(async () => {
+    attempts += 1;
+    if (attempts < 3) throw startingDatabaseError();
+  }, {
+    log: (message) => messages.push(message),
+    now: () => time, pause: async (ms) => { time += ms; },
+  });
+  assert.equal(attempts, 3);
+  assert.equal(time, 4000);
+  assert.equal(messages.length, 1);
+  assert.match(messages[0], /retrying automatically/);
+});
+
+test("Supabase restored by Docker is reused if it becomes healthy between attempts", async () => {
+  let time = 0;
+  let attempts = 0;
+  await startSupabaseWithRetry(async () => {
+    attempts += 1;
+    throw startingDatabaseError();
+  }, {
+    ready: async () => time >= 2000,
+    now: () => time, pause: async (ms) => { time += ms; },
+  });
+  assert.equal(attempts, 1);
+  assert.equal(time, 2000);
+});
+
+test("unhealthy databases and other Supabase failures are reported without retries", async () => {
+  for (const message of [
+    "supabase_db_mindmate-chatbot container is not ready: unhealthy",
+    "HTTP error: port 55121 is occupied",
+    "Startup timed out while running node.exe.",
+  ]) {
+    const error = new Error(message);
+    let attempts = 0;
+    await assert.rejects(startSupabaseWithRetry(async () => {
+      attempts += 1;
+      throw error;
+    }, { pause: async () => assert.fail("Fatal errors must not wait for a retry") }), (actual) => actual === error);
+    assert.equal(attempts, 1);
+  }
+});
+
+test("Supabase startup retries stop at the deadline and honor cancellation", async () => {
+  let time = 0;
+  let attempts = 0;
+  const start = async () => { attempts += 1; throw startingDatabaseError(); };
+  await assert.rejects(startSupabaseWithRetry(start, {
+    timeoutMs: 6000,
+    now: () => time, pause: async (ms) => { time += ms; },
+  }), /Supabase database did not become ready/);
+  assert.equal(attempts, 3);
+  assert.equal(time, 6000);
+
+  const controller = new AbortController();
+  attempts = 0;
+  await assert.rejects(startSupabaseWithRetry(start, {
+    signal: controller.signal,
+    pause: async () => { controller.abort(new Error("Cancelled")); },
+  }), /Cancelled/);
+  assert.equal(attempts, 1);
 });
 
 test("readiness polling has a bounded timeout and honors cancellation", async () => {
