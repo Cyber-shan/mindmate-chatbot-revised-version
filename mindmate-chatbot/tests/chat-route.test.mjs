@@ -33,6 +33,9 @@ test("streams the first reply before Ollama completes and bounds prompt work", a
   assert.equal(payload.think, false);
   assert.equal(payload.options.num_ctx, 2048);
   assert.equal(payload.options.num_predict, 256);
+  assert.equal(payload.keep_alive, "30m");
+  assert.match(response.headers.get("Server-Timing"), /prepare;dur=/);
+  assert.match(response.headers.get("Server-Timing"), /ollama_headers;dur=/);
   assert.ok(payload.messages.slice(1).reduce((total, item) => total + item.content.length, 0) <= 6000);
   assert.deepEqual(payload.messages.at(-1), messages[0]);
   const updates = [];
@@ -52,6 +55,46 @@ test("rejects invalid messages without calling Ollama", async (t) => {
     assert.equal(response.status, 400);
   }
   assert.equal(fetch.mock.callCount(), 0);
+});
+
+test("immediate safety replies bypass Ollama even when it is unavailable", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", () => { throw new Error("Ollama offline"); });
+  const response = await POST(request([{ role: "user", content: "I want to hurt myself." }]));
+  const support = [];
+  const reply = await readChatReply(response, () => {}, (value) => support.push(value));
+  assert.match(reply, /Are you safe right now/);
+  assert.equal(fetch.mock.callCount(), 0);
+  assert.equal(support[0].safety_response_required, true);
+  assert.equal(support[0].review_status, "unavailable");
+  assert.equal("confidence" in support[0], false);
+  assert.equal("model" in support[0], false);
+});
+
+test("uses safety context outside the eight-message generation window", async (t) => {
+  t.mock.method(globalThis, "fetch", () => { throw new Error("Unexpected generation"); });
+  const response = await POST(request([
+    { role: "user", content: "I feel hopeless." },
+    { role: "assistant", content: "Are you safe right now?" },
+    ...Array.from({ length: 10 }, () => ({ role: "user", content: "Everything" })),
+    { role: "user", content: "Not really" },
+  ]));
+  assert.match(await readChatReply(response, () => {}), /nearest emergency department/);
+});
+
+test("rejects malformed JSON, assistant-final and oversized messages", async () => {
+  const malformed = new Request("http://localhost/api/chat", { method: "POST", body: "{" });
+  assert.equal((await POST(malformed)).status, 400);
+  assert.equal((await POST(request([{ role: "assistant", content: "Hello" }]))).status, 400);
+  assert.equal((await POST(request([{ role: "user", content: "x".repeat(4001) }]))).status, 400);
+  assert.equal((await POST(new Request("http://localhost/api/chat", { method: "POST", body: "x".repeat(256001) }))).status, 413);
+});
+
+test("conversation-backed requests require authentication before accessing records", async () => {
+  const response = await POST(new Request("http://localhost/api/chat", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, conversationId: "11111111-1111-4111-8111-111111111111", messageId: "22222222-2222-4222-8222-222222222222" }),
+  }));
+  assert.equal(response.status, 401);
 });
 
 test("returns upstream model errors before starting a stream", async (t) => {

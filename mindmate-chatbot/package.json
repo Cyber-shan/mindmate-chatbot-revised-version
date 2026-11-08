@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test:chat": "node --test tests/chat-stream.test.mjs tests/chat-route.test.mjs",
-    "benchmark:chat": "node scripts/benchmark-chat.mjs"
+    "test:support": "node --test tests/support.test.mjs tests/support-store.test.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "benchmark:chat": "node scripts/benchmark-chat-performance.mjs",
+    "warmup:chat": "node scripts/warmup-chat.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.24",

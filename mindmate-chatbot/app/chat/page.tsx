@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { readChatReply } from "@/lib/chat-stream";
+import { ChatTimings } from "@/lib/chat-performance";
+import type { StudentSupport } from "@/lib/support/types";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Bot,
@@ -148,12 +150,14 @@ export default function Chat() {
   const [isProgressExpanded, setIsProgressExpanded] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [support, setSupport] = useState<StudentSupport | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const requestControllerRef = useRef<AbortController | null>(null);
   const messageIdRef = useRef(0);
+  const historyRequestIdRef = useRef(0);
   const isWelcome = messages.length === 0;
   const conversationHistoryGroups = useMemo(
     () => groupConversationsByDay(conversations),
@@ -199,12 +203,14 @@ export default function Chat() {
             : "Writing the response...";
 
   const refreshConversationHistory = useCallback(async () => {
+    const requestId = ++historyRequestIdRef.current;
     const { data, error } = await supabase
       .from("conversations")
       .select("id, title, created_at, updated_at")
       .order("updated_at", { ascending: false })
       .limit(50);
 
+    if (requestId !== historyRequestIdRef.current) return;
     if (error) {
       setHistoryError("Unable to load your conversation history.");
       return;
@@ -245,6 +251,7 @@ export default function Chat() {
       if (session?.user) {
         void refreshConversationHistory();
       } else {
+        historyRequestIdRef.current += 1;
         setConversations([]);
         setActiveConversationId(null);
         setMessages([]);
@@ -254,6 +261,7 @@ export default function Chat() {
 
     return () => {
       isMounted = false;
+      historyRequestIdRef.current += 1;
       subscription.unsubscribe();
     };
   }, [refreshConversationHistory, router, supabase]);
@@ -290,6 +298,8 @@ export default function Chat() {
   const handleSend = async (text?: string) => {
     const msgText = (text ?? input).trim();
     if (!msgText || isTyping || isHistoryLoading) return;
+    const timings = new ChatTimings();
+    let firstReplyRecorded = false;
 
     messageIdRef.current += 1;
     const userMessage: Message = {
@@ -388,6 +398,7 @@ export default function Chat() {
       }
 
       savedUserMessage = true;
+      timings.record("save_user");
       setMessages((previousMessages) =>
         previousMessages.map((message) =>
           message.id === userMessage.id
@@ -399,19 +410,26 @@ export default function Chat() {
 
       setProgressStage("generating-response");
 
+      const { data: { session } } = await timings.measure("session", () => supabase.auth.getSession());
+      if (!session) throw new Error("Please sign in to continue.");
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          messages: conversation.map((message) => ({
+          conversationId,
+          messageId: storedUserMessage.id,
+          messages: conversation.slice(-200).map((message) => ({
             role: message.role === "ai" ? "assistant" : "user",
             content: message.text,
           })),
         }),
         signal: controller.signal,
       });
+      timings.record("headers_elapsed");
 
       if (!response.ok) {
         const data = (await response.json()) as ChatApiResponse;
@@ -420,6 +438,7 @@ export default function Chat() {
 
       const reply = await readChatReply(response, (content) => {
         if (controller.signal.aborted) return;
+        if (!firstReplyRecorded) { firstReplyRecorded = true; timings.record("first_text"); }
         if (!localAssistantMessageId) {
           messageIdRef.current += 1;
           const messageId = `local-${messageIdRef.current}`;
@@ -436,12 +455,13 @@ export default function Chat() {
             ),
           );
         }
-      });
+      }, (value) => { if (!controller.signal.aborted) setSupport(value); });
 
       if (controller.signal.aborted) return;
+      timings.record("reply_complete");
       setProgressStage("saving-response");
 
-      const { data: storedAssistantMessage, error: assistantMessageError } = await supabase
+      const { data: storedAssistantMessage, error: assistantMessageError } = await timings.measure("save_assistant", () => supabase
         .from("messages")
         .insert({
           conversation_id: conversationId,
@@ -449,7 +469,7 @@ export default function Chat() {
           content: reply,
         })
         .select("id, role, content, created_at")
-        .single();
+        .single());
 
       if (assistantMessageError || !storedAssistantMessage) {
         console.error("Unable to save assistant message:", assistantMessageError);
@@ -464,7 +484,10 @@ export default function Chat() {
         );
       }
 
-      await refreshConversationHistory();
+      timings.record("complete");
+      if (process.env.NEXT_PUBLIC_CHAT_PERFORMANCE === "true") console.info("chat_timing", timings.snapshot());
+      // The reply is already displayed and saved; refreshing the sidebar need not block the next message.
+      void refreshConversationHistory();
     } catch (error) {
       if (controller.signal.aborted) return;
 
@@ -501,6 +524,7 @@ export default function Chat() {
   };
 
   const loadConversation = async (conversationId: string) => {
+    setSupport(null);
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
     setIsProgressExpanded(false);
@@ -537,6 +561,7 @@ export default function Chat() {
   };
 
   const resetChat = () => {
+    setSupport(null);
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
     setActiveConversationId(null);
@@ -1207,6 +1232,13 @@ export default function Chat() {
                 }}
               >
                 <div className="mx-auto w-full" style={{ maxWidth: "680px" }}>
+                  {support?.safety_response_required && (
+                    <aside aria-label="Human support" className="mb-3 rounded-xl border p-3 text-sm" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--foreground)" }}>
+                      <p className="font-medium">You deserve support from a person, too.</p>
+                      <p className="mt-1 text-xs">{support.review_status === "queued" ? "A review request has been saved. A response is not guaranteed immediately; please reach out directly for urgent help." : "This chat has not contacted a counselor or emergency services. Please reach out to someone you trust or your school counselor."}</p>
+                      {support.resources.map((resource) => <a key={resource.href} href={resource.href} className="mt-2 block underline">{resource.label}</a>)}
+                    </aside>
+                  )}
                   {chatError && (
                     <p
                       role="alert"

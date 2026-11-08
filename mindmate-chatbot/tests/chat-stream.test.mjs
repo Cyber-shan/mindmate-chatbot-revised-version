@@ -84,3 +84,35 @@ test("cancels the upstream stream when parsing fails", async () => {
   await assert.rejects(readChatReply(response, () => {}), SyntaxError);
   assert.equal(cancelled, true);
 });
+
+test("batches rapid tokens but shows the first token and final reply immediately", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let controller;
+  const updates = [];
+  const response = new Response(new ReadableStream({ start(value) { controller = value; } }));
+  const reply = readChatReply(response, (text) => updates.push(text));
+  controller.enqueue(encoder.encode(event("a")));
+  await new Promise(setImmediate);
+  assert.deepEqual(updates, ["a"]);
+  controller.enqueue(encoder.encode(event("b") + event("c") + event("d")));
+  await new Promise(setImmediate);
+  assert.deepEqual(updates, ["a"]);
+  t.mock.timers.tick(39);
+  assert.deepEqual(updates, ["a"]);
+  t.mock.timers.tick(1);
+  assert.deepEqual(updates, ["a", "abcd"]);
+  controller.enqueue(encoder.encode(event("e") + event("f", true)));
+  assert.equal(await reply, "abcdef");
+  assert.deepEqual(updates, ["a", "abcd", "abcdef"]);
+  t.mock.timers.tick(100);
+  assert.equal(updates.length, 3);
+});
+
+test("a failed stream cancels any pending UI update", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const updates = [];
+  const bytes = encoder.encode(event("first") + event(" pending") + '{"error":"interrupted"}\n');
+  await assert.rejects(readChatReply(responseFromChunks([bytes]), (text) => updates.push(text)), /interrupted/);
+  t.mock.timers.tick(100);
+  assert.deepEqual(updates, ["first"]);
+});

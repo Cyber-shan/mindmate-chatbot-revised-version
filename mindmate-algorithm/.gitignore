@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+artifacts/
+data/*
+!data/schema.csv

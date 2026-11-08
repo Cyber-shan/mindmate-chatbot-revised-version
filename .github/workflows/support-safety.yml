@@ -1,0 +1,35 @@
+name: MindMate support safety
+on:
+  push:
+  pull_request:
+jobs:
+  chat-safety:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mindmate-chatbot
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mindmate-chatbot/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run lint
+  classifier:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mindmate-algorithm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: mindmate-algorithm/requirements.txt
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
