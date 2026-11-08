@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Flag as FlagIcon, LayoutGrid, LogOut, Menu, Users, X } from "lucide-react";
+import { Flag as FlagIcon, FlaskConical, LayoutGrid, LogOut, Menu, Users, X } from "lucide-react";
 import { type createTrendData, type Flag, type Status } from "./data";
 
 export interface AdminContext {
@@ -21,9 +21,10 @@ export const useAdmin = () => {
 };
 
 const NAV = [
-  { to: "/admin", label: "Overview", icon: LayoutGrid, end: true },
-  { to: "/admin/reports", label: "Flagged reports", icon: FlagIcon, end: false },
-  { to: "/admin/students", label: "Students", icon: Users, end: false },
+  { to: "/admin", label: "Algorithm tester", icon: FlaskConical, end: true },
+  { to: "/admin/overview", label: "Sample overview", icon: LayoutGrid, end: true },
+  { to: "/admin/reports", label: "Sample reports", icon: FlagIcon, end: false },
+  { to: "/admin/students", label: "Sample students", icon: Users, end: false },
 ];
 
 export default function AdminLayout({ children, initialFlags, trendData }: {
@@ -44,7 +45,7 @@ export default function AdminLayout({ children, initialFlags, trendData }: {
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar">
       <div className="flex h-[60px] items-center gap-2 border-b border-border px-5">
-        <span className="font-serif text-xl text-foreground">Solace</span>
+        <span className="font-serif text-xl text-foreground">MindMate</span>
         <span className="rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
           Admin
         </span>
@@ -77,15 +78,15 @@ export default function AdminLayout({ children, initialFlags, trendData }: {
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-3 rounded-xl px-2 py-2">
           <div className="flex size-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-white">
-            DR
+            MM
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">Dr. Rivera</p>
-            <p className="truncate text-xs text-muted-foreground">Counselor on duty</p>
+            <p className="truncate text-sm font-semibold text-foreground">Admin workspace</p>
+            <p className="truncate text-xs text-muted-foreground">Prototype</p>
           </div>
           <button
             onClick={() => router.push("/")}
-            aria-label="Log out"
+            aria-label="Back to MindMate"
             className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <LogOut className="size-4" />
@@ -116,7 +117,7 @@ export default function AdminLayout({ children, initialFlags, trendData }: {
             >
               {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
-            <span className="font-serif text-lg">Solace Admin</span>
+            <span className="font-serif text-lg">MindMate Admin</span>
           </header>
           <main className="flex-1 overflow-y-auto">
             {children}

@@ -24,6 +24,8 @@ Press Ctrl+C to stop the app. The launcher also stops an Ollama server it starte
 
 ## Verify the demonstration
 
+Click **Admin sign in** on the login page to open the algorithm tester. Choose a sample message and click **Analyze message** to see the real support-priority decision, matched rules and context. **Run all 9 examples** displays an expected-versus-actual comparison for the synthetic regression cases. This prototype testing workspace does not require a separate admin account and does not read real student conversations.
+
 - Start a new chat and try an ordinary schoolwork concern; text should stream into the reply.
 - Confirm the completed messages remain in history after reopening the conversation.
 - In a fresh conversation, use a synthetic high-concern example and check the fixed safety check-in.

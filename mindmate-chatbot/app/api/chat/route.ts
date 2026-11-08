@@ -1,6 +1,6 @@
 import type { ChatMessage } from "../../../lib/support/types.ts";
 import { prioritize } from "../../../lib/support/policy.ts";
-import { predict } from "../../../lib/support/classifier.ts";
+import { assessSupport } from "../../../lib/support/assess.ts";
 import { safetyReply, studentSupport } from "../../../lib/support/responses.ts";
 import { ConversationError, loadConversation, recordDecision } from "../../../lib/support/store.ts";
 import { ChatTimings } from "../../../lib/chat-performance.ts";
@@ -81,10 +81,7 @@ export async function POST(request: Request) {
 
     const latest = messages.at(-1)!;
     const history = messages.slice(0, -1);
-    const localDecision = prioritize(latest.content, history, null, context?.previous);
-    // Direct safety signals must not wait for either an ML service or generative model.
-    const model = localDecision.level === "IMMEDIATE_SAFETY" ? null : await timings.measure("classifier", () => predict(latest.content, controller.signal));
-    const decision = model ? prioritize(latest.content, history, model, context?.previous) : localDecision;
+    const decision = await timings.measure("classifier", () => assessSupport(latest.content, history, { signal: controller.signal, previous: context?.previous }));
     const queued = await timings.measure("audit", () => recordDecision(decision, context));
     timings.record("prepare");
     const support = studentSupport(decision, queued);

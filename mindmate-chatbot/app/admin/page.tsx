@@ -1,5 +1,5 @@
-import Overview from "@/components/admin/Overview";
+import AlgorithmTester from "@/components/admin/AlgorithmTester";
 
 export default function Page() {
-  return <Overview />;
+  return <AlgorithmTester />;
 }

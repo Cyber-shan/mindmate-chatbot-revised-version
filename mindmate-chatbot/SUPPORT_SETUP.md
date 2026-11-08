@@ -46,7 +46,17 @@ Apply [`supabase/migrations/20261108090000_create_support_events.sql`](supabase/
 
 Audit requests have a one-second deadline and failures do not suppress safety replies. Missing persistence, missing migration or write failure reports review as unavailable. A successfully saved event is only reported as queued when `SUPPORT_REVIEW_QUEUE_ENABLED=true`. Retried messages use an idempotent write and do not reopen reviewed events. A queue entry does not mean a counselor has been contacted or that an immediate response is guaranteed; the interface states this explicitly.
 
-The existing `/admin` screens use their existing sample data. This change supplies a **private database queue**, not a staffed monitoring service or an authenticated staff dashboard. Connect institution-approved staff tooling to rows with `review_status='pending'` before enabling the queue. No email, SMS, emergency-service call, automatic external notification or remote database change is performed.
+The `/admin` entry now opens a prototype algorithm tester using the same assessment function as student chat. It only evaluates text supplied in the test form; it does not load saved student conversations, read private audit rows, or write review events. The existing direct **Admin sign in** link remains the entry point, with no separate admin account flow. This test workspace is not an authenticated staff dashboard. Use synthetic examples there.
+
+The previous sample overview remains at `/admin/overview`; sample reports and sample students remain in their original routes and are labeled accordingly. They do not represent live algorithm results. The private `support_events` queue still requires institution-approved staff access before it is used for real monitoring. No email, SMS, emergency-service call, automatic external notification or remote database change is performed.
+
+## See decisions in the admin prototype
+
+Start the project with `npm.cmd run dev`, open the existing login page, and click **Admin sign in**, or visit http://localhost:3000/admin directly. Choose an example or type a test message, then click **Analyze message**. The result shows the support category, source, matched rule IDs, safety and human-review requirements, conversation state, available model confidence and a fixed safety-response preview when applicable.
+
+Use **Include a previous safety question** to test short replies in context. For example, "Not really" after "Are you safe right now?" should select `IMMEDIATE_SAFETY`. **Run all 9 examples** evaluates each synthetic case through the running endpoint and compares actual outcomes with expected labels. The structured decision JSON is expandable for the defense demonstration.
+
+The tester calls `POST /api/admin/algorithm`, which delegates to `assessSupport`, also used by `POST /api/chat`. Immediate safety signals bypass ML. Other messages use a reviewed classifier only when one is configured and available. Rules-only results display confidence as unavailable; no synthetic confidence scores are invented. Passing the built-in examples verifies these cases, not population-level accuracy or clinical validity.
 
 ## Rule maintenance and verification
 
