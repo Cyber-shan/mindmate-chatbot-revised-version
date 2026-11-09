@@ -86,7 +86,7 @@ test("informal messages participate in conversation safety state", () => {
 
 test("changed safety behavior has a new draft rule version", () => {
   const result = prioritize("i wanna die");
-  assert.equal(result.rule_version, "mindmate-safety-rules-v2-draft");
+  assert.equal(result.rule_version, "mindmate-safety-rules-v3-draft");
   assert.equal(result.rule_review_status, "requires_clinician_review");
   assert.equal(analyzeSafety("i wanna die").direct_intent, true);
 });

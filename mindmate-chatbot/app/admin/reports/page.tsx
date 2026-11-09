@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import Reports from "@/components/admin/Reports";
+import AlgorithmReports from "@/components/admin/AlgorithmReports";
 
 export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <Reports />
-    </Suspense>
-  );
+  return <AlgorithmReports />;
 }

@@ -76,7 +76,7 @@ test("a first-person disclosure takes precedence over third-party context", () =
 });
 
 // Thresholds below are test fixtures only, never production defaults.
-const model = (scores) => ({ scores, model_version: "test-fixture", thresholds: { immediate: 0.2, high: 0.4, confidence: 0.6 } });
+const model = (scores) => ({ scores, model_version: "test-fixture", model_mode: "reviewed", thresholds: { immediate: 0.2, high: 0.4, confidence: 0.6 } });
 test("a confident low ML prediction cannot lower direct safety intent", () => {
   const result = prioritize("I want to hurt myself", [], model({ LOW: 0.97, MODERATE: 0.01, HIGH_CONCERN: 0.01, IMMEDIATE_SAFETY: 0.01 }));
   assert.equal(result.level, "IMMEDIATE_SAFETY");

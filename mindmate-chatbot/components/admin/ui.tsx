@@ -23,8 +23,8 @@ export const STATUS_ICON: Record<Status, typeof Eye> = {
 };
 
 export const STATUS_STYLE: Record<Status, string> = {
-  new: "border-foreground bg-foreground text-white",
-  reviewed: "border-foreground bg-white text-foreground",
+  new: "border-foreground bg-foreground text-primary-foreground",
+  reviewed: "border-foreground bg-background text-foreground",
   resolved: "border-transparent bg-accent text-muted-foreground",
   "false-positive": "border-dashed border-muted-foreground/60 bg-transparent text-muted-foreground",
 };
@@ -45,11 +45,11 @@ export function StatusPill({ status, size = "sm" }: { status: Status; size?: "sm
 }
 
 export const CATEGORY_COLOR: Record<Category, { fg: string; bg: string }> = {
-  suicidal: { fg: "#9E3B2E", bg: "#F6E6E2" },
-  "harm-others": { fg: "#6A3A5E", bg: "#F0E5ED" },
-  abuse: { fg: "#A5601C", bg: "#F8EBDA" },
-  distress: { fg: "#3C5E8C", bg: "#E4ECF5" },
-  academic: { fg: "#586A36", bg: "#EBEFDD" },
+  suicidal: { fg: "var(--category-safety)", bg: "var(--category-safety-surface)" },
+  "harm-others": { fg: "var(--category-harm)", bg: "var(--category-harm-surface)" },
+  abuse: { fg: "var(--category-abuse)", bg: "var(--category-abuse-surface)" },
+  distress: { fg: "var(--category-distress)", bg: "var(--category-distress-surface)" },
+  academic: { fg: "var(--category-academic)", bg: "var(--category-academic-surface)" },
 };
 
 export function CategoryTag({ category }: { category: Category }) {
@@ -99,7 +99,7 @@ export function initials(name: string) {
 export function avatarTone(id: string) {
   let h = 0;
   for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 360;
-  return { bg: `hsl(${h} 35% 88%)`, fg: `hsl(${h} 45% 28%)`, ring: `hsl(${h} 30% 72%)` };
+  return { bg: `hsl(${h} 35% var(--avatar-bg-lightness))`, fg: `hsl(${h} 45% var(--avatar-fg-lightness))`, ring: `hsl(${h} 30% var(--avatar-ring-lightness))` };
 }
 
 export function StudentAvatar({ id, name, size = 40 }: { id: string; name: string; size?: number }) {

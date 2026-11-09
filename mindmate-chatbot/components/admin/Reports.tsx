@@ -63,12 +63,12 @@ export default function Reports() {
               aria-selected={active}
               onClick={() => setParam("category", t.id === "all" ? null : t.id)}
               className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
-                active ? "border-foreground bg-foreground text-white" : "border-border hover:bg-accent"
+                active ? "border-foreground bg-foreground text-primary-foreground" : "border-border hover:bg-accent"
               }`}
             >
               {t.id !== "all" && <CategoryDot category={t.id} />}
               {t.label}
-              <span className={`font-mono text-xs ${active ? "text-white/70" : "text-muted-foreground"}`}>{t.count}</span>
+              <span className={`font-mono text-xs ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{t.count}</span>
             </button>
           );
         })}
@@ -82,7 +82,7 @@ export default function Reports() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search messages or students"
             aria-label="Search"
-            className="w-full rounded-xl border-[1.5px] border-border bg-secondary py-2 pl-9 pr-3 text-sm outline-none focus:border-foreground focus:bg-white"
+            className="w-full rounded-xl border-[1.5px] border-border bg-secondary py-2 pl-9 pr-3 text-sm outline-none focus:border-foreground focus:bg-background"
           />
         </div>
       </div>
@@ -100,12 +100,12 @@ export default function Reports() {
               aria-pressed={active}
               onClick={() => setParam("status", st === "all" ? null : st)}
               className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                active ? "border-foreground bg-foreground text-white" : "border-border bg-white hover:bg-accent"
+                active ? "border-foreground bg-foreground text-primary-foreground" : "border-border bg-background hover:bg-accent"
               }`}
             >
               {Icon && <Icon className="size-3.5" aria-hidden />}
               {st === "all" ? "All" : STATUS_LABEL[st]}
-              <span className={`font-mono ${active ? "text-white/70" : "text-muted-foreground"}`}>{count}</span>
+              <span className={`font-mono ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{count}</span>
             </button>
           );
         })}
@@ -127,7 +127,7 @@ export default function Reports() {
                 onClick={() => setParam("open", f.id)}
                 style={{ borderLeft: `4px solid ${CATEGORY_COLOR[f.category].fg}` }}
                 className={`grid w-full grid-cols-[auto_1fr] gap-x-4 gap-y-2 px-4 py-4 text-left transition-colors hover:bg-card md:grid-cols-[auto_1fr_auto_auto] md:items-center ${
-                  f.status === "new" ? "bg-white" : f.status === "reviewed" ? "bg-card" : "bg-card/60 opacity-70"
+                  f.status === "new" ? "bg-background" : f.status === "reviewed" ? "bg-card" : "bg-card/60 opacity-70"
                 }`}
               >
                 <StudentAvatar id={f.studentId} name={f.studentName} />

@@ -34,8 +34,9 @@ export default function Students() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 md:px-8">
       <div>
-        <h1 className="font-serif text-3xl">Students</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Students with at least one flagged message, most recent first.</p>
+        <h1 className="font-serif text-3xl">Sample students</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Synthetic records for exploring the review interface. These are not real students or live algorithm decisions.</p>
+        <p className="mt-3 rounded-xl border border-border bg-card px-4 py-3 text-xs leading-5 text-muted-foreground">Sample messages and review statuses are demonstration data. Use Algorithm tester for live decisions and Evaluation reports for measured classifier results.</p>
       </div>
 
       <div className="space-y-3">
@@ -46,7 +47,7 @@ export default function Students() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by student name or ID"
             aria-label="Search students"
-            className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-10 text-sm outline-none focus:border-foreground"
+            className="h-11 w-full rounded-full border border-border bg-background pl-10 pr-10 text-sm outline-none focus:border-foreground"
           />
           {q && (
             <button onClick={() => setQ("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-accent">
@@ -86,7 +87,7 @@ export default function Students() {
           {shown.map((s) => (
             <li key={s.id}>
               <Link
-                href={`/admin/reports?open=${s.latest.id}`}
+                href={`/admin/sample-reports?open=${s.latest.id}`}
                 className="block rounded-2xl border border-border p-4 transition-colors hover:bg-card"
               >
                 <div className="flex items-center gap-3">

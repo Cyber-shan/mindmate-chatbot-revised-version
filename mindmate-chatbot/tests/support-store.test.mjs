@@ -100,3 +100,16 @@ test("audit stores structured metadata without the student's message text", asyn
   });
   assert.equal(await recordDecision(prioritize("I want to hurt myself"), { conversationId, messageId }), true);
 });
+
+test("an audit retry cannot claim a pending review after the monitored queue is disabled", async (t) => {
+  env(t);
+  t.mock.method(console, "info", () => {});
+  t.mock.method(globalThis, "fetch", async (_url, options) => {
+    if (options.method === "POST") return Response.json([]);
+    return Response.json({ review_status: "pending" });
+  });
+  const decision = prioritize("I want to hurt myself");
+  assert.equal(await recordDecision(decision, { conversationId, messageId }), true);
+  process.env.SUPPORT_REVIEW_QUEUE_ENABLED = "false";
+  assert.equal(await recordDecision(decision, { conversationId, messageId }), false);
+});

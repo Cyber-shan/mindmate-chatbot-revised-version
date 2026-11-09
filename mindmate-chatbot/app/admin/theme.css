@@ -2,32 +2,25 @@
   --font-size: 16px;
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  --background: #FFFFFF;
-  --foreground: #111110;
-  --card: #F8F8F6;
-  --card-foreground: #111110;
-  --popover: #FFFFFF;
-  --popover-foreground: #111110;
-
-  --primary: #111110;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F4F4F2;
-  --secondary-foreground: #111110;
-
-  --muted: #F4F4F2;
-  --muted-foreground: #4A4A47;
-
-  --accent: #EFEFED;
-  --accent-foreground: #111110;
-
-  --destructive: #C0392B;
-  --destructive-foreground: #FFFFFF;
-
-  --border: #E8E8E5;
+  /* Inherit the app-wide background/foreground instead of forcing light mode. */
+  --card: var(--surface-subtle);
+  --card-foreground: var(--foreground);
+  --popover: var(--background);
+  --popover-foreground: var(--foreground);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--surface-active);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--error);
+  --destructive-foreground: var(--on-primary);
+  --border: var(--border-subtle);
   --input: transparent;
-  --input-background: #F4F4F2;
-  --switch-background: #CECECA;
-  --ring: rgba(17, 17, 16, 0.35);
+  --input-background: var(--surface);
+  --switch-background: var(--checkbox-border);
+  --ring: color-mix(in srgb, var(--foreground) 35%, transparent);
 
   --radius: 0.75rem;
   --admin-radius-sm: calc(var(--radius) - 4px);
@@ -41,14 +34,14 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  --sidebar: #F8F8F6;
-  --sidebar-foreground: #111110;
-  --sidebar-primary: #111110;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #EFEFED;
-  --sidebar-accent-foreground: #111110;
-  --sidebar-border: #E8E8E5;
-  --sidebar-ring: rgba(17, 17, 16, 0.25);
+  --sidebar: var(--surface-subtle);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-active);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: color-mix(in srgb, var(--foreground) 25%, transparent);
 
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -112,7 +105,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: var(--font-size);
-    color-scheme: light;
+    color-scheme: inherit;
   }
 
   :where(.admin-design) h1 {
@@ -169,10 +162,10 @@
     background: transparent;
   }
   :where(.admin-design) ::-webkit-scrollbar-thumb {
-    background: #D8D8D4;
+    background: var(--checkbox-border);
     border-radius: 99px;
   }
   :where(.admin-design) ::-webkit-scrollbar-thumb:hover {
-    background: #B0B0AC;
+    background: var(--text-muted);
   }
 }

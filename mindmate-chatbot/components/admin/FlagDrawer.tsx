@@ -84,13 +84,13 @@ function DrawerBody({ flag, history, onUpdate }: Omit<Props, "onClose"> & { flag
                 <div key={i} className={`flex ${isStudent ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[85%] px-4 py-2.5 text-sm ${
-                      isStudent ? "bg-foreground text-white" : "bg-secondary text-foreground"
+                      isStudent ? "bg-foreground text-primary-foreground" : "bg-secondary text-foreground"
                     } ${isStudent ? "rounded-[18px_18px_4px_18px]" : "rounded-[18px_18px_18px_4px]"} ${
                       isFlagged ? "ring-2 ring-foreground/30 ring-offset-2" : ""
                     }`}
                   >
                     {isFlagged ? (
-                      <span className="[&_mark]:text-foreground [&_mark]:bg-white">{highlight(m.text, flag.matched)}</span>
+                      <span className="[&_mark]:text-foreground [&_mark]:bg-background">{highlight(m.text, flag.matched)}</span>
                     ) : (
                       m.text
                     )}
@@ -110,7 +110,7 @@ function DrawerBody({ flag, history, onUpdate }: Omit<Props, "onClose"> & { flag
             {flag.signals && (
               <ul className="mt-3 flex flex-wrap gap-2">
                 {flag.signals.map((s) => (
-                  <li key={s} className="rounded-full border border-border bg-white px-2.5 py-1 text-xs">
+                  <li key={s} className="rounded-full border border-border bg-background px-2.5 py-1 text-xs">
                     {s}
                   </li>
                 ))}
@@ -146,12 +146,12 @@ function DrawerBody({ flag, history, onUpdate }: Omit<Props, "onClose"> & { flag
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="Add context for the next reviewer"
-            className="w-full resize-none rounded-xl border-[1.5px] border-border bg-secondary px-3 py-2.5 text-sm outline-none transition-colors focus:border-foreground focus:bg-white"
+            className="w-full resize-none rounded-xl border-[1.5px] border-border bg-secondary px-3 py-2.5 text-sm outline-none transition-colors focus:border-foreground focus:bg-background"
           />
         </section>
       </div>
 
-      <div className="sticky bottom-0 space-y-3 border-t border-border bg-white p-5">
+      <div className="sticky bottom-0 space-y-3 border-t border-border bg-background p-5">
         <div className="grid grid-cols-2 gap-2">
           {actions.map(({ label, status }) => {
             const Icon = STATUS_ICON[status];
@@ -176,7 +176,7 @@ function DrawerBody({ flag, history, onUpdate }: Omit<Props, "onClose"> & { flag
       <AlertDialog.Root open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-[60] bg-black/50" />
-          <AlertDialog.Content className="admin-design fixed left-1/2 top-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-white p-6 shadow-xl outline-none">
+          <AlertDialog.Content className="admin-design fixed left-1/2 top-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-xl outline-none">
             {pending && (
               <>
                 <div className={`mx-auto flex size-11 items-center justify-center rounded-full border ${STATUS_STYLE[pending]}`}>
@@ -192,7 +192,7 @@ function DrawerBody({ flag, history, onUpdate }: Omit<Props, "onClose"> & { flag
                   {STATUS_HELP[pending]} This will be saved with your notes for {flag.studentName} ({flag.id}).
                 </AlertDialog.Description>
                 <div className="mt-6 grid grid-cols-2 gap-2">
-                  <AlertDialog.Cancel className="rounded-xl border border-border bg-white px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-accent">
+                  <AlertDialog.Cancel className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-accent">
                     Cancel
                   </AlertDialog.Cancel>
                   <button

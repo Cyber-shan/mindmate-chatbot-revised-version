@@ -6,6 +6,7 @@ export type Scores = Record<SupportLevel, number>;
 export type ModelPrediction = {
   scores: Scores;
   model_version: string;
+  model_mode: "reviewed" | "prototype";
   thresholds: { immediate: number; high: number; confidence: number };
 };
 
@@ -37,6 +38,7 @@ export type SupportDecision = {
   model: Scores | null;
   rules: string[];
   model_version: string | null;
+  model_mode: ModelPrediction["model_mode"] | null;
   rule_version: string;
   rule_review_status: string;
   subject: "student" | "other";

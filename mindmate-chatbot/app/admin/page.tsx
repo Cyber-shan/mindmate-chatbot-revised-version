@@ -1,5 +1,5 @@
-import AlgorithmTester from "@/components/admin/AlgorithmTester";
+import DetectedStudents from "@/components/admin/DetectedStudents";
 
 export default function Page() {
-  return <AlgorithmTester />;
+  return <DetectedStudents />;
 }

@@ -6,10 +6,12 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { getOllamaConfig } from "../lib/chat-config.ts";
 import { buildFingerprint, hiddenWindowsLaunchArgs, prepareLocalServices, requireLocalHttpUrl, safeStartupOutput, waitUntil } from "./local-startup.mjs";
+import { preparePrototypeClassifier } from "./classifier-startup.mjs";
+import { prepareOptionalLocalAudit } from "./local-audit.mjs";
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const forwarded = process.argv.slice(2).filter((argument) => argument !== "--demo");
+const forwarded = process.argv.slice(2).filter((argument) => !["--demo", "--prototype"].includes(argument));
 const demo = process.argv.includes("--demo");
 process.chdir(root);
 require("@next/env").loadEnvConfig(root, !demo, { info() {}, error() {} });
@@ -19,6 +21,11 @@ const children = new Set();
 const executeFile = promisify(execFile);
 const windows = process.platform === "win32";
 const childEnv = { ...process.env, NODE_ENV: demo ? "production" : "development" };
+const prototype = process.argv.includes("--prototype") || childEnv.DISTRESS_CLASSIFIER_MODE === "prototype";
+if (prototype) {
+  childEnv.DISTRESS_CLASSIFIER_MODE = "prototype";
+  childEnv.DISTRESS_CLASSIFIER_URL ??= "http://127.0.0.1:8001";
+}
 const log = (message) => console.log(`[MindMate] ${message}`);
 let stopping = false;
 
@@ -48,7 +55,7 @@ async function cleanup() {
   await Promise.all([...children].map(terminate));
 }
 
-function run(executable, args, { inherit = false, timeoutMs = 0, background = false, env = childEnv } = {}) {
+function run(executable, args, { inherit = false, timeoutMs = 0, background = false, serviceName = "Ollama", env = childEnv } = {}) {
   controller.signal.throwIfAborted();
   const child = spawn(executable, args, { cwd: root, env, windowsHide: true, stdio: inherit ? "inherit" : ["ignore", "pipe", "pipe"] });
   children.add(child);
@@ -69,7 +76,7 @@ function run(executable, args, { inherit = false, timeoutMs = 0, background = fa
   if (background) {
     // A background service failure aborts startup or the running app, without an unhandled rejection.
     const failed = (error) => { if (!stopping) { console.error(`[MindMate] ${error.message}`); void stop(1); } };
-    completion.then(() => failed(new Error("The local Ollama server stopped unexpectedly.")), failed);
+    completion.then(() => failed(new Error(`The local ${serviceName} server stopped unexpectedly.`)), failed);
     return Promise.resolve();
   }
   return completion;
@@ -99,6 +106,7 @@ async function main() {
   const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!publicKey) throw new Error("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is missing in .env.local.");
   log(`Starting the local ${demo ? "defense demo" : "development app"}...`);
+  if (prototype) await preparePrototypeClassifier({ root, env: childEnv, run, signal: controller.signal, log });
   const supabaseReady = async () => {
     const results = await Promise.all([
       probe(new URL("/auth/v1/health", supabaseUrl)),
@@ -137,6 +145,7 @@ async function main() {
     },
     warmup: () => run(process.execPath, [path.join(root, "scripts", "warmup-chat.mjs")], { inherit: true, timeoutMs: 130_000 }),
   });
+  await prepareOptionalLocalAudit({ root, env: childEnv, executeFile, signal: controller.signal, log });
   const next = require.resolve("next/dist/bin/next");
   if (demo) {
     const marker = path.join(root, ".next", "mindmate-build.json");
@@ -149,7 +158,7 @@ async function main() {
       await writeFile(marker, JSON.stringify({ fingerprint }) + "\n");
     } else log("Reusing the existing optimized app build.");
   }
-  log("Services and model are ready. Open the address shown below; press Ctrl+C to stop the app.");
+  log(`Local services and chatbot model are ready${prototype ? ", including the synthetic prototype classifier" : ""}. Open the address shown below; press Ctrl+C to stop the app.`);
   await run(process.execPath, [next, demo ? "start" : "dev", ...forwarded], { inherit: true });
 }
 

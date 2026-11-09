@@ -30,7 +30,7 @@ export default function Overview() {
             <Link
               key={c}
               href={`/admin/reports?category=${c}`}
-              style={{ background: bg, borderColor: fg + "33" }}
+              style={{ background: bg, borderColor: `color-mix(in srgb, ${fg} 20%, transparent)` }}
               className="flex flex-col rounded-2xl border p-4 transition-opacity hover:opacity-80"
             >
               <Icon className="size-4" style={{ color: fg }} aria-hidden />
@@ -74,11 +74,11 @@ export default function Overview() {
           <div className="mt-4 h-60">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData} margin={{ left: -20 }}>
-                <CartesianGrid key="grid" vertical={false} stroke="#E8E8E5" />
-                <XAxis key="x" dataKey="day" tick={{ fontSize: 11, fill: "#4A4A47" }} tickLine={false} axisLine={false} interval={2} />
-                <YAxis key="y" allowDecimals={false} tick={{ fontSize: 11, fill: "#4A4A47" }} tickLine={false} axisLine={false} />
-                <Tooltip key="t" contentStyle={{ borderRadius: 12, border: "1px solid #E8E8E5", fontSize: 12 }} />
-                                <Line key="all" type="monotone" dataKey="All flags" stroke="#111110" strokeWidth={2} dot={false} />
+                <CartesianGrid key="grid" vertical={false} stroke="var(--border)" />
+                <XAxis key="x" dataKey="day" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} axisLine={false} interval={2} />
+                <YAxis key="y" allowDecimals={false} tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} axisLine={false} />
+                <Tooltip key="t" contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", fontSize: 12, background: "var(--background)", color: "var(--foreground)" }} />
+                                <Line key="all" type="monotone" dataKey="All flags" stroke="var(--foreground)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

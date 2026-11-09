@@ -36,7 +36,7 @@ const compiledRules = config.rules.map((rule) => ({
 const primaryRules = compiledRules.filter((rule) => !rule.fallback);
 const fallbackRules = compiledRules.filter((rule) => rule.fallback);
 const academic = /\b(?:assignment|psychology class|research paper|define|definition|what does|what is|lyrics|song|movie|novel|quotation)\b/;
-const historical = /\b(?:used to|years? ago|last year|yesterday|last night|in the past|back then|dati|noon)\b/;
+const historical = /\b(?:used to|(?:days?|weeks?|months?|years?) ago|last (?:week|month|year|night)|yesterday|in the past|back then|when i was (?:younger|a child|a teenager)|dati|noon)\b/;
 const current = /\b(?:now|today|tonight|currently|again|ngayon|mamaya)\b/;
 const safeNow = /\b(?:i(?:'m| am) safe (?:now|today)|no longer (?:feel|want|think)|not anymore)\b/;
 const thirdParty = /\b(?:my (?:friend|classmate|sister|brother|partner)|he|she|they) (?:said|says|told|wrote|texted|asked|is|wants?|plans?)\b/;
@@ -44,49 +44,67 @@ const thirdParty = /\b(?:my (?:friend|classmate|sister|brother|partner)|he|she|t
 function negated(prefix: string): boolean {
   // Scope negation to the current clause, never to the whole message.
   // Uncertainty about a safety disclosure is not a denial of that disclosure.
-  const scope = prefix.replace(/\b(?:don't|do not|doesn't|does not|didn't|did not) know (?:if|whether)\b|\bnot (?:sure|certain) (?:if|whether)\b/g, "uncertain whether");
-  return /\b(?:not|never|don't|do not|doesn't|does not|didn't|did not|isn't|is not|aren't|are not|wasn't|was not|weren't|were not|wouldn't|would not|won't|will not|no intention to|ayaw|hindi)\b[^.!?;,:]{0,32}$/.test(scope);
+  const scope = prefix
+    .replace(/\b(?:don't|do not|doesn't|does not|didn't|did not) know\b(?: (?:if|whether))?|\bnot (?:sure|certain)\b(?: (?:if|whether))?/g, "uncertain whether")
+    .replace(/\b(?:can't|cannot|couldn't|could not|won't|will not|not able to|unable to) stop\b/g, "unable to stop");
+  return /\b(?:not|never|don't|do not|doesn't|does not|didn't|did not|isn't|is not|aren't|are not|wasn't|was not|weren't|were not|wouldn't|would not|won't|will not|no (?:intention|plans?|desire|wish) (?:to|of)|ayaw|hindi)\b[^.!?;,:]{0,32}$/.test(scope);
 }
 
-function insideQuote(prefix: string): boolean {
-  let single = false;
-  let double = false;
-  for (let index = 0; index < prefix.length; index += 1) {
-    const character = prefix[index];
-    if (character === '"' && !single) double = !double;
-    if (character !== "'" || double) continue;
+function quoteSpans(text: string): { start: number; end: number }[] {
+  const spans: { start: number; end: number }[] = [];
+  let openingCharacter = "";
+  let openingIndex = -1;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character !== '"' && character !== "'") continue;
     // Apostrophes within contractions are not quotation boundaries.
-    if (/[a-z0-9]/.test(prefix[index - 1] ?? "") && /[a-z0-9]/.test(prefix[index + 1] ?? "")) continue;
-    if (single) single = false;
-    else if (index === 0 || /[\s(:,]/.test(prefix[index - 1])) single = true;
+    if (character === "'" && /[a-z0-9]/.test(text[index - 1] ?? "") && /[a-z0-9]/.test(text[index + 1] ?? "")) continue;
+    if (openingCharacter === character) {
+      spans.push({ start: openingIndex + 1, end: index });
+      openingCharacter = "";
+      openingIndex = -1;
+    } else if (openingIndex < 0 && (character === '"' || index === 0 || /[\s(:,]/.test(text[index - 1]))) {
+      openingCharacter = character;
+      openingIndex = index;
+    }
   }
-  return single || double;
+  // An unclosed quote is ambiguous and must not suppress a possible disclosure.
+  return spans;
 }
 
-function matchContext(text: string, index: number, length: number) {
-  const sentenceStart = Math.max(text.lastIndexOf(".", index - 1), text.lastIndexOf("!", index - 1), text.lastIndexOf("?", index - 1), text.lastIndexOf(";", index - 1)) + 1;
-  const sentencePrefix = text.slice(sentenceStart, index);
+function matchContext(text: string, index: number, length: number, quotes: { start: number; end: number }[]) {
+  const quote = quotes.find((span) => span.start <= index && span.end >= index + length);
+  // Attribution belongs to the whole quote, including quotes spanning sentences.
+  const anchor = quote ? quote.start - 1 : index;
+  const sentenceStart = Math.max(text.lastIndexOf(".", anchor - 1), text.lastIndexOf("!", anchor - 1), text.lastIndexOf("?", anchor - 1), text.lastIndexOf(";", anchor - 1)) + 1;
   let start = sentenceStart;
   // A separate first-person clause starts its own negation and subject scope.
   const contrast = [...text.slice(sentenceStart, index + 1).matchAll(/\b(?:but|however|yet)\b|\band\s+(?=i\b)/g)].at(-1);
   if (contrast) start += contrast.index + contrast[0].length;
-  const endIndex = text.slice(index + length).search(/[.!?;]/);
-  const end = endIndex < 0 ? text.length : index + length + endIndex;
+  const after = quote ? quote.end + 1 : index + length;
+  const endIndex = text.slice(after).search(/[.!?;]/);
+  const end = endIndex < 0 ? text.length : after + endIndex;
   const clause = text.slice(start, end);
   const prefix = text.slice(start, index);
-  const quoted = insideQuote(sentencePrefix);
+  const outerPrefix = quote ? text.slice(sentenceStart, quote.start - 1) : prefix;
+  const attributionContrast = [...outerPrefix.matchAll(/\b(?:but|however|yet)\b|\band\s+(?=i\b)/g)].at(-1);
+  const attribution = attributionContrast ? outerPrefix.slice(attributionContrast.index + attributionContrast[0].length) : outerPrefix;
+  const personalQuote = /\bi (?:said|say|told|tell|wrote|write|texted|keep saying|keep thinking|am thinking|was thinking)\b/.test(attribution)
+    || (quote && /\b(?:how i (?:feel|felt)|i (?:mean|meant) (?:it|this)|true for me)\b/.test(text.slice(quote.end + 1, end)));
   return {
-    prefix, clause,
+    prefix: quote ? attribution : prefix, clause,
     negated: negated(prefix),
-    historical: historical.test(prefix) || (historical.test(clause) && safeNow.test(clause)),
-    thirdParty: thirdParty.test(prefix) || (quoted && thirdParty.test(sentencePrefix)),
-    academic: (academic.test(text.slice(sentenceStart, end)) && quoted)
-      || (academic.test(prefix) && /\b(?:phrase|sentence|example|means?)\b/.test(prefix)),
+    involuntary: /\b(?:can't|cannot|not able to|unable to) stop\b/.test(prefix),
+    historical: historical.test(quote ? attribution : prefix) || (historical.test(clause) && safeNow.test(clause)),
+    thirdParty: thirdParty.test(prefix) || (quote && thirdParty.test(attribution)),
+    academic: (quote && academic.test(attribution) && !personalQuote)
+      || (!quote && academic.test(prefix) && /\b(?:phrase|sentence|example|means?)\b/.test(prefix)),
   };
 }
 
 export function analyzeSafety(message: string): SafetySignal {
   const text = normalize(message);
+  const quotes = quoteSpans(text);
   const signal: SafetySignal = {
     level: "LOW", matched_rules: [], current_action: false,
     direct_intent: false, first_person_concern: false, temporal_immediacy: current.test(text), contexts: [],
@@ -97,7 +115,8 @@ export function analyzeSafety(message: string): SafetySignal {
       for (const match of text.matchAll(pattern)) {
         const index = match.index;
         if (rule.fallback && covered.some((range) => range.start <= index && range.end >= index + match[0].length)) continue;
-        const context = matchContext(text, index, match[0].length);
+        const context = matchContext(text, index, match[0].length, quotes);
+        if (context.involuntary) signal.contexts.push("involuntary_thoughts_or_action");
         if (context.negated) { signal.contexts.push("negated"); continue; }
         const explicitOther = rule.id === "third_party_safety_concern";
         const educational = (rule.fallback || explicitOther) && academic.test(context.clause) && !/\bi\b/.test(context.clause);
@@ -142,6 +161,9 @@ export function safetyQuestionKind(message: string): "safe" | "danger" | null {
 }
 
 export function unsafeReply(message: string, kind: "safe" | "danger" | null = "safe"): boolean {
+  const text = normalize(message);
+  if (/\b(?:not sure|uncertain|don't know|do not know)[^.!?;]{0,45}\b(?:stay|keep|remain|be|feel) (?:myself )?safe\b/.test(text)
+    || /\bi (?:don't|do not) think i can (?:stay|keep|remain) (?:myself )?safe\b/.test(text)) return true;
   if (kind === "danger") return /^(?:yes|yeah|yep|oo|maybe|not sure|i don't know|i'm not sure|i am not sure)\b/.test(normalize(message)) || /\bi(?:'m| am) not safe\b/.test(normalize(message));
   return /^(?:no|nope|not really|not sure|unsure|i don't know|i do not know|i'm not sure|i am not sure|maybe|hindi|di ako sigurado)(?:[.!?, ]|$)/.test(normalize(message))
     || /\b(?:i(?:'m| am) not safe|i (?:can't|cannot) (?:stay|keep myself) safe|i (?:don't|do not) feel safe)\b/.test(normalize(message));
@@ -149,13 +171,18 @@ export function unsafeReply(message: string, kind: "safe" | "danger" | null = "s
 
 export function safeReply(message: string, kind: "safe" | "danger" | null = "safe"): boolean {
   const affirmative = kind === "danger" ? /^(?:no|nope|hindi)\b/ : /^(?:yes|yeah|yep|i(?:'m| am) safe|safe|oo)\b/;
-  return affirmative.test(normalize(message)) && !unsafeReply(message, kind);
+  const text = normalize(message);
+  const explicitSafe = kind !== "danger" && /(?:^|[.!?;,]|\band\b)\s*i(?:'m| am) (?:currently )?safe\b/.test(text);
+  return (affirmative.test(text) || explicitSafe) && !unsafeReply(message, kind);
 }
 
-export function conversationState(history: ChatMessage[]): ConversationState {
+export function conversationState(history: ChatMessage[], previous?: ConversationState): ConversationState {
   const state: ConversationState = {
-    highest_level: "LOW", safety_question_active: false, safety_question_kind: null,
-    prior_high_concern: false, prior_immediate_concern: false,
+    highest_level: previous?.highest_level ?? "LOW",
+    safety_question_active: previous?.safety_question_active ?? false,
+    safety_question_kind: previous?.safety_question_active ? previous.safety_question_kind ?? "safe" : null,
+    prior_high_concern: previous?.prior_high_concern ?? false,
+    prior_immediate_concern: previous?.prior_immediate_concern ?? false,
   };
   for (const message of history) {
     if (message.role === "assistant") {

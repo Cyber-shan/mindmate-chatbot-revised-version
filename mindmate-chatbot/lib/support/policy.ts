@@ -6,18 +6,15 @@ const labels: Record<SupportLevel, string> = {
   HIGH_CONCERN: "High support priority", IMMEDIATE_SAFETY: "Immediate safety support",
 };
 
-export function prioritize(message: string, history: ChatMessage[] = [], model: ModelPrediction | null = null, previous?: ConversationState): SupportDecision {
-  const state = conversationState(history);
-  if (previous) {
-    state.highest_level = higher(state.highest_level, previous.highest_level);
-    state.prior_high_concern ||= previous.prior_high_concern;
-    state.prior_immediate_concern ||= previous.prior_immediate_concern;
-    if (!state.safety_question_active && previous.safety_question_active) {
-      state.safety_question_active = true;
-      state.safety_question_kind = previous.safety_question_kind ?? "safe";
-    }
-  }
+export function prioritize(message: string, history: ChatMessage[] = [], prediction: ModelPrediction | null = null, previous?: ConversationState): SupportDecision {
+  const state = conversationState(history, previous);
   const safety = analyzeSafety(message);
+  // A synthetic lexical model has no validated understanding of these contexts.
+  // Abstain rather than let it undo the rule engine's scoped interpretation.
+  const prototypeContext = safety.contexts.some((context) => ["negated", "academic_or_quoted", "ordinary_expression", "historical", "third_party", "involuntary_thoughts_or_action"].includes(context));
+  // A text-only classifier cannot interpret an answer relative to the previous question.
+  const contextReply = state.safety_question_active && (safeReply(message, state.safety_question_kind) || unsafeReply(message, state.safety_question_kind));
+  const model = contextReply || (prediction?.model_mode === "prototype" && prototypeContext) ? null : prediction;
   if (safeReply(message, state.safety_question_kind) && (safety.level === "LOW" || safety.level === "MODERATE")) state.safety_question_active = false;
   let level = safety.level;
   let source: SupportDecision["source"] = "rules_only";
@@ -55,6 +52,7 @@ export function prioritize(message: string, history: ChatMessage[] = [], model: 
     requires_human_review: safetyResponse || uncertain || (!model && level === "MODERATE"),
     safety_response_required: safetyResponse, model: model?.scores ?? null,
     rules: safety.matched_rules, model_version: model?.model_version ?? null,
+    model_mode: model ? model.model_mode ?? "reviewed" : null,
     rule_version: ruleVersion, rule_review_status: ruleReviewStatus, state,
     subject,
   };
