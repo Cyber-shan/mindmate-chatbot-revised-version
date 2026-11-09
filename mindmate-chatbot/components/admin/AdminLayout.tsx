@@ -103,7 +103,8 @@ export default function AdminLayout({ children }: {
           <span className="font-serif text-lg">MindMate Admin</span>
           <ThemeToggle className="ml-auto" />
         </header>
-        <main className="flex-1 overflow-y-auto">
+        {/* Contain absolutely positioned screen-reader text within this scroll area. */}
+        <main className="relative flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
