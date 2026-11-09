@@ -1,10 +1,5 @@
 import { analyzeSafety, conversationState, ruleReviewStatus, ruleVersion, safeReply, unsafeReply } from "./safety.ts";
-import { higher, LEVELS, type ChatMessage, type ConversationState, type ModelPrediction, type SupportDecision, type SupportLevel } from "./types.ts";
-
-const labels: Record<SupportLevel, string> = {
-  LOW: "Routine support", MODERATE: "Additional support",
-  HIGH_CONCERN: "High support priority", IMMEDIATE_SAFETY: "Immediate safety support",
-};
+import { higher, LEVELS, SUPPORT_PRIORITIES, type ChatMessage, type ConversationState, type ModelPrediction, type SupportDecision } from "./types.ts";
 
 export function prioritize(message: string, history: ChatMessage[] = [], prediction: ModelPrediction | null = null, previous?: ConversationState): SupportDecision {
   const state = conversationState(history, previous);
@@ -48,8 +43,8 @@ export function prioritize(message: string, history: ChatMessage[] = [], predict
   state.safety_question_active = safetyResponse && subject === "student";
   state.safety_question_kind = state.safety_question_active ? "safe" : null;
   return {
-    level, display_label: labels[level], source, confidence,
-    requires_human_review: safetyResponse || uncertain || (!model && level === "MODERATE"),
+    level, display_label: SUPPORT_PRIORITIES[level].label, source, confidence,
+    requires_human_review: level !== "LOW",
     safety_response_required: safetyResponse, model: model?.scores ?? null,
     rules: safety.matched_rules, model_version: model?.model_version ?? null,
     model_mode: model ? model.model_mode ?? "reviewed" : null,

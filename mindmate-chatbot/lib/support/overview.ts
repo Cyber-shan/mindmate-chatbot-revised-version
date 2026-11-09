@@ -279,6 +279,11 @@ async function loadReport<T>(name: string, parser: (value: unknown) => T, reader
   try { return { report: parser(await reader(name)), status: "ready" }; }
   catch (failure) { return { report: null, status: failure instanceof Error && "code" in failure && failure.code === "ENOENT" ? "missing" : "invalid" }; }
 }
+export async function algorithmStatus(signal?: AbortSignal): Promise<AlgorithmOverview> {
+  const service = await runtime(signal);
+  return { checked_at: new Date().toISOString(), runtime: service, evaluation: null, evaluation_status: "missing", context: null, context_status: "missing" };
+}
+
 export async function algorithmOverview(options: { signal?: AbortSignal; readReport?: (name: string) => Promise<unknown> } = {}): Promise<AlgorithmOverview> {
   const [service, evaluation, context] = await Promise.all([
     runtime(options.signal), loadReport("evaluation.json", parseEvaluationReport, options.readReport ?? localReport),

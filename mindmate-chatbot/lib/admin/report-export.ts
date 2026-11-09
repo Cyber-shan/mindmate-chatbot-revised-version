@@ -1,6 +1,7 @@
 import type { DetectedAccount, StudentDetectionReport } from "./detection-types.ts";
+import { SUPPORT_PRIORITIES, type SupportLevel } from "../support/types.ts";
 
-const label = (value: string | null) => value ? value.toLowerCase().replaceAll("_", " ") : "No unresolved detections";
+const label = (value: SupportLevel | null) => value ? SUPPORT_PRIORITIES[value].label : "No unresolved detections";
 
 function cell(value: string | number | null) {
   const text = value === null ? "" : String(value);

@@ -39,6 +39,6 @@ export async function POST(request: Request) {
     };
     return Response.json(result, { headers });
   } catch {
-    return Response.json({ error: "The algorithm test could not finish. Please try again." }, { status: 500, headers });
+    return Response.json({ error: "The classification test could not finish. Please try again." }, { status: 500, headers });
   }
 }

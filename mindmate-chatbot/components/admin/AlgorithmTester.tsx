@@ -1,20 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Activity, ArrowRight, Check, CheckCircle2, FlaskConical, LoaderCircle, Play, Plus, RotateCcw, ShieldCheck, Trash2, XCircle } from "lucide-react";
 import { SUPPORT_EXAMPLES, type SupportExample } from "@/lib/support/examples";
 import { LEVELS, type ChatMessage, type SupportDecision, type SupportLevel } from "@/lib/support/types";
 import type { AlgorithmTestResult } from "@/lib/support/testing";
 import { useAlgorithmOverview } from "./AlgorithmProvider";
-import AlgorithmStatus from "./AlgorithmStatus";
+import { PRIORITIES as LEVEL_STYLE, PriorityBadge } from "./algorithm-ui";
 
-const LEVEL_STYLE: Record<SupportLevel, { label: string; color: string; background: string; description: string }> = {
-  LOW: { label: "Low", color: "var(--priority-low)", background: "var(--priority-low-surface)", description: "Ordinary emotional concerns" },
-  MODERATE: { label: "Moderate", color: "var(--priority-moderate)", background: "var(--priority-moderate-surface)", description: "Additional support may help" },
-  HIGH_CONCERN: { label: "High concern", color: "var(--priority-high)", background: "var(--priority-high-surface)", description: "Safety check and human support" },
-  IMMEDIATE_SAFETY: { label: "Immediate safety", color: "var(--priority-immediate)", background: "var(--priority-immediate-surface)", description: "Dedicated safety response" },
-};
 const SOURCE_LABEL: Record<SupportDecision["source"], string> = {
   rules_only: "Safety rules and context", ml: "ML classifier", hybrid: "Rules + ML classifier",
   safety_override: "Safety rule override", conversation_context: "Conversation context", uncertain_model: "Uncertain model prediction",
@@ -30,19 +23,14 @@ const TEST_EXAMPLES: SupportExample[] = [...SUPPORT_EXAMPLES,
 ];
 type ExampleResult = { example: SupportExample; result: AlgorithmTestResult };
 
-function PriorityBadge({ level }: { level: SupportLevel }) {
-  const style = LEVEL_STYLE[level];
-  return <span className="inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold" style={{ color: style.color, background: style.background }}>{style.label}</span>;
-}
-
 async function analyze(message: string, history: ChatMessage[], signal: AbortSignal): Promise<AlgorithmTestResult> {
   const response = await fetch("/api/admin/algorithm", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, history }), signal,
   });
   const data = await response.json() as AlgorithmTestResult & { error?: string };
-  if (!response.ok) throw new Error(data?.error ?? "The algorithm test could not finish.");
-  if (!data?.decision || !LEVELS.includes(data.decision.level)) throw new Error("The algorithm returned an incomplete result. Please try again.");
+  if (!response.ok) throw new Error(data?.error ?? "The classification test could not finish.");
+  if (!data?.decision || !LEVELS.includes(data.decision.level)) throw new Error("The classifier returned an incomplete result. Please try again.");
   return data;
 }
 
@@ -96,13 +84,10 @@ export default function AlgorithmTester() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><FlaskConical className="size-4" /> MindMate admin</div>
-          <h1 className="font-serif text-3xl text-foreground">Algorithm tester</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Try a message and see how the same algorithm used in student chat prioritizes support.</p>
+          <h1 className="font-serif text-3xl text-foreground">Support-priority classification</h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Classify the available message by the recommended level and urgency of counselor attention. Test the same classification used in student chat.</p>
         </div>
-        <Link href="/admin/reports" className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold hover:bg-accent">View evaluation reports <ArrowRight className="size-3.5" /></Link>
       </header>
-
-      <AlgorithmStatus />
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
         <p className="max-w-xl text-xs leading-5 text-muted-foreground">Test messages stay out of student history and review queues. Results prioritize support; they are not diagnoses.</p>
@@ -156,17 +141,15 @@ export default function AlgorithmTester() {
           </div>
         </form>
 
-        <section aria-label="Algorithm result" aria-live="polite" className="min-w-0 rounded-2xl border border-border p-5 md:p-6">
+        <section aria-label="Support-priority classification result" aria-live="polite" className="min-w-0 rounded-2xl border border-border p-5 md:p-6">
           <div className="mb-5 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 !text-sm font-semibold"><span className="flex size-6 items-center justify-center rounded-full bg-foreground text-xs text-primary-foreground">2</span> Inspect the decision</h2>{result && <span className="text-xs tabular-nums text-muted-foreground">{result.elapsed_ms} ms</span>}</div>
           {!decision ? <div>
             <div className="mb-6 rounded-xl bg-card px-4 py-6 text-center"><ShieldCheck className="mx-auto mb-3 size-8 text-muted-foreground" /><p className="text-sm font-medium">Your decision will appear here</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Choose an example or write a message, then click Analyze message.</p></div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground">The four support priorities</p>
-            <div className="space-y-3">{LEVELS.map((level) => <div key={level} className="flex flex-wrap items-center justify-between gap-2"><PriorityBadge level={level} /><span className="text-xs text-muted-foreground">{LEVEL_STYLE[level].description}</span></div>)}</div>
           </div> : <div className="space-y-5">
             <div className="rounded-xl p-4" style={{ background: LEVEL_STYLE[decision.level].background }}>
               <PriorityBadge level={decision.level} /><h3 data-testid="algorithm-priority" className="mt-2 break-words !text-xl font-semibold" style={{ color: LEVEL_STYLE[decision.level].color }}>{decision.display_label}</h3>
-              <p className="mt-1 font-mono text-xs" style={{ color: LEVEL_STYLE[decision.level].color }}>{decision.level}</p>
-              {expected && <p className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: LEVEL_STYLE[decision.level].color }}>{expected === decision.level ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}{expected === decision.level ? "Matches the example’s expected result" : `Example expected ${expected}`}</p>}
+              <p className="mt-1 text-xs leading-5" style={{ color: LEVEL_STYLE[decision.level].color }}>{LEVEL_STYLE[decision.level].description}</p>
+              {expected && <p className="mt-3 flex items-center gap-1.5 text-xs" style={{ color: LEVEL_STYLE[decision.level].color }}>{expected === decision.level ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}{expected === decision.level ? "Matches the example’s expected result" : `Example expected ${LEVEL_STYLE[expected].label}`}</p>}
             </div>
             <p className="break-words text-xs leading-5 text-muted-foreground">Tested message: “{result?.evaluated_message}”</p>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-xs">
@@ -176,10 +159,10 @@ export default function AlgorithmTester() {
               <div><dt className="text-muted-foreground">Human review required</dt><dd className="mt-1 font-semibold">{decision.requires_human_review ? "Yes" : "No"}</dd></div>
               <div><dt className="text-muted-foreground">Safety response required</dt><dd className="mt-1 font-semibold">{decision.safety_response_required ? "Yes" : "No"}</dd></div>
             </dl>
-            {decision.model_mode === "prototype" && <p className="rounded-xl border border-warning-border bg-warning-surface p-3 text-xs leading-5 text-warning">This model was trained on synthetic English examples. Its scores demonstrate the algorithm and have not been validated on real student messages.</p>}
+            {decision.model_mode === "prototype" && <p className="rounded-xl border border-warning-border bg-warning-surface p-3 text-xs leading-5 text-warning">This model was trained on synthetic English examples. Its scores demonstrate support-priority classification and have not been validated on real student messages.</p>}
             {decision.model && <section aria-label="Model class probabilities" className="rounded-xl border border-border p-3"><h3 className="!text-xs font-semibold">Model class probabilities</h3><p className="mb-3 mt-1 text-[11px] leading-5 text-muted-foreground">Raw scores before safety rules, thresholds and conversation context. The highest score is not a clinical certainty.</p><div className="space-y-3">{LEVELS.map((level) => <div key={level}><div className="mb-1 flex justify-between gap-3 text-xs"><span>{LEVEL_STYLE[level].label}</span><span className="font-mono tabular-nums">{(decision.model![level] * 100).toFixed(1)}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-accent"><div className="h-full rounded-full" style={{ width: `${decision.model![level] * 100}%`, background: LEVEL_STYLE[level].color }} /></div></div>)}</div></section>}
             <div className="border-t border-border pt-4"><h3 className="!text-xs font-semibold">Matched rules</h3><div className="mt-2 flex flex-wrap gap-1.5">{decision.rules.length ? decision.rules.map((rule) => <span key={rule} className="break-all rounded-md bg-card px-2 py-1 font-mono text-[11px]">{rule}</span>) : <p className="text-xs text-muted-foreground">No positive support-priority rule matched.</p>}</div></div>
-            <div className="rounded-xl bg-card p-3 text-xs leading-6"><p className="font-semibold">Conversation context</p><p>{result?.history_count ?? 0} previous messages · Highest priority: {decision.state.highest_level}</p><p>Safety question active: {decision.state.safety_question_active ? "Yes" : "No"}</p>{Boolean(result?.safety_signal.contexts.length) && <p>Detected context: {result?.safety_signal.contexts.join(", ").replaceAll("_", " ")}</p>}</div>
+            <div className="rounded-xl bg-card p-3 text-xs leading-6"><p className="font-semibold">Conversation context</p><p>{result?.history_count ?? 0} previous messages · Highest priority: {LEVEL_STYLE[decision.state.highest_level].label}</p><p>Safety question active: {decision.state.safety_question_active ? "Yes" : "No"}</p>{Boolean(result?.safety_signal.contexts.length) && <p>Detected context: {result?.safety_signal.contexts.join(", ").replaceAll("_", " ")}</p>}</div>
             {result?.response_preview ? <div><h3 className="mb-2 !text-xs font-semibold">Chatbot safety-response preview</h3><blockquote className="rounded-xl border border-border p-3 text-xs leading-6 text-muted-foreground">{result.response_preview}</blockquote></div> : <p className="text-xs leading-5 text-muted-foreground">Student chat would continue with a supportive generated reply for this priority.</p>}
             <p className="text-[11px] leading-5 text-muted-foreground">Rule set: {decision.rule_version}. {decision.rule_review_status === "requires_clinician_review" ? "Draft rules; clinician review is pending." : decision.rule_review_status} {decision.model_version ? `Model: ${decision.model_version}.` : "No ML model contributed to this result."}</p>
             <details className="border-t border-border pt-3"><summary className="cursor-pointer text-xs font-semibold">View structured decision JSON</summary><pre className="mt-3 max-h-64 overflow-auto rounded-xl bg-card p-3 text-[11px] leading-5">{JSON.stringify(decision, null, 2)}</pre></details>
@@ -187,8 +170,13 @@ export default function AlgorithmTester() {
         </section>
       </div>
 
+      <section aria-label="Support-priority categories" className="rounded-2xl border border-border p-5 md:p-6">
+        <h2 className="!text-sm font-semibold">Support-priority categories</h2>
+        <dl className="mt-4 divide-y divide-border">{LEVELS.map((level) => <div key={level} className="grid gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[180px_1fr] sm:items-start sm:gap-4"><dt><PriorityBadge level={level} /></dt><dd className="text-xs leading-5 text-muted-foreground">{LEVEL_STYLE[level].description}</dd></div>)}</dl>
+      </section>
+
       {suite.length > 0 && <section aria-label="Example test results" className="overflow-hidden rounded-2xl border border-border">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-5 py-4"><div><h2 className="!text-sm font-semibold">Built-in example checks</h2><p className="mt-1 text-xs text-muted-foreground">Each row was evaluated by the running algorithm.</p></div><span data-testid="example-summary" className="inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-semibold">{passed === suite.length ? <CheckCircle2 className="size-4 text-success" /> : <XCircle className="size-4 text-warning" />}{passed}/{suite.length} matched</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-5 py-4"><div><h2 className="!text-sm font-semibold">Built-in example checks</h2><p className="mt-1 text-xs text-muted-foreground">Each row was evaluated by the running support-priority classifier.</p></div><span data-testid="example-summary" className="inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs font-semibold">{passed === suite.length ? <CheckCircle2 className="size-4 text-success" /> : <XCircle className="size-4 text-warning" />}{passed}/{suite.length} matched</span></div>
         <div className="relative overflow-x-auto"><table className="w-full min-w-[570px] text-left text-xs"><thead className="text-muted-foreground"><tr><th className="px-5 py-3 font-medium">Scenario</th><th className="px-3 py-3 font-medium">Expected</th><th className="px-3 py-3 font-medium">Actual</th><th className="px-3 py-3 font-medium">Check</th><th className="px-4 py-3"><span className="sr-only">Inspect</span></th></tr></thead><tbody className="divide-y divide-border">{suite.map(({ example, result: item }) => <tr key={example.id}><td className="px-5 py-3 font-medium">{example.title}</td><td className="px-3 py-3"><PriorityBadge level={example.expected} /></td><td className="px-3 py-3"><PriorityBadge level={item.decision.level} /></td><td className="px-3 py-3">{example.expected === item.decision.level ? <span className="inline-flex items-center gap-1 text-success"><Check className="size-3.5" /> Pass</span> : <span className="text-warning">Review</span>}</td><td className="px-4 py-3"><button type="button" disabled={Boolean(busy)} aria-label={`Inspect ${example.title}`} onClick={() => { choose(example); setResult(item); setExpected(example.expected); }} className="inline-flex items-center gap-1 font-medium hover:underline">View <ArrowRight className="size-3" /></button></td></tr>)}</tbody></table></div>
         <p className="border-t border-border px-5 py-3 text-[11px] leading-5 text-muted-foreground">Expected labels are rules-only reference outcomes. A contributing model can raise priority; review differing results. These checks do not measure accuracy on real student messages or confirm clinical validity.</p>
       </section>}

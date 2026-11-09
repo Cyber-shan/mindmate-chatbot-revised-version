@@ -1,4 +1,4 @@
-"""Generate synthetic English data and train the locally usable demo classifier."""
+"""Generate synthetic English data and train the local support-priority classification prototype."""
 import argparse
 import json
 from pathlib import Path

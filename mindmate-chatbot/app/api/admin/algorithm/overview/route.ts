@@ -1,10 +1,16 @@
 import { algorithmOverview } from "../../../../../lib/support/overview.ts";
+import { requireOwner } from "../../../../../lib/admin/owner.ts";
+import { StaffReportError } from "../../../../../lib/admin/staff.ts";
 
 export const runtime = "nodejs";
 
-/** Aggregate prototype artifacts and service status only; this endpoint never reads student records. */
+/** Private aggregate artifacts; owner authorization precedes service and report reads. */
 export async function GET(request: Request) {
-  const headers = { "Cache-Control": "no-store" };
-  try { return Response.json(await algorithmOverview({ signal: request.signal }), { headers }); }
-  catch { return Response.json({ error: "The algorithm status could not be loaded. Please try again." }, { status: 503, headers }); }
+  const headers = { "Cache-Control": "private, no-store", Vary: "Authorization" };
+  try {
+    await requireOwner(request);
+    return Response.json(await algorithmOverview({ signal: request.signal }), { headers });
+  } catch (error) {
+    return Response.json({ error: error instanceof StaffReportError ? error.message : "The classification status could not be loaded. Please try again." }, { status: error instanceof StaffReportError ? error.status : 503, headers });
+  }
 }

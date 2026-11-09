@@ -1,13 +1,15 @@
-# Support-priority annotation guide (draft)
+# Support-priority classification annotation guide (draft)
 
-These labels describe support needs, not diagnoses. Have qualified reviewers approve this rubric, the runtime rules and response templates before a student-facing release.
+These categories describe recommended counselor attention based on the available message and permitted conversation context. They support human review and do not diagnose a disorder or assign clinical severity. Have qualified reviewers approve this rubric, the runtime rules and response templates before a student-facing release.
 
-| Label | Annotation focus | Intended application action |
+| Category | Intended meaning | Internal key |
 |---|---|---|
-| LOW | Ordinary, transient emotional concerns without a stronger safety signal | Supportive conversation |
-| MODERATE | Persistent or significant stress, sadness, anxiety or difficulty managing daily tasks | Structured support and human-support suggestions |
-| HIGH_CONCERN | Serious emotional difficulty, severe hopelessness, passive or ambiguous safety language, or relevant historical/third-party concerns | Safety clarification and human-review option |
-| IMMEDIATE_SAFETY | Possible current personal self-harm/suicide danger, current action or unsafe reply to an active safety question | Dedicated safety response and urgent review request |
+| **Low priority** | Routine supportive response; no direct counselor attention indicated by the available message. | `LOW` |
+| **Moderate priority** | Counselor attention recommended, but not urgently. | `MODERATE` |
+| **High priority** | Counselor attention recommended as soon as possible. | `HIGH_CONCERN` |
+| **Immediate attention** | Potential safety-related content requiring priority human review. | `IMMEDIATE_SAFETY` |
+
+Use the internal keys in training CSV files and model artifacts to preserve compatibility. A recommendation for counselor attention does not itself contact a counselor or guarantee a review time.
 
 Preserve the original message. Label personal current intent differently from explicit denial, academic discussion, quotations, third-person disclosures and past experiences. A denial does not cancel a separate disclosure in another clause. Record uncertainty for adjudication instead of forcing an unsupported confident label.
 

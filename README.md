@@ -6,7 +6,7 @@ Start the complete English development prototype from this folder or `mindmate-c
 npm run dev
 ```
 
-This prepares or reuses the trained synthetic-data classifier, starts its local Python service and the existing app services, and launches the app with automatic code reloading. Open **Admin > Algorithm tester** to inspect live decisions and model scores. Synthetic scores demonstrate the pipeline; they are not validated estimates for real students. See the [algorithm guide](mindmate-algorithm/README.md) for training, evaluation, and standalone service commands.
+This prepares or reuses the trained synthetic-data classifier, starts its local Python service and the existing app services, and launches the app with automatic code reloading. Open **Admin > Classification tester** to inspect live support-priority classification decisions and model scores. The classification identifies the recommended level of counselor attention from the available message: **Low priority**, **Moderate priority**, **High priority**, or **Immediate attention**. Synthetic scores demonstrate the pipeline; they are not validated estimates for real students. See the [classification guide](mindmate-algorithm/README.md) for category meanings, training, evaluation, and standalone service commands.
 
 To generate and train the classifier without starting Docker, Supabase, or Ollama:
 
@@ -18,7 +18,7 @@ npm.cmd run train:algorithm
 
 Training writes a readable [evaluation report](mindmate-algorithm/artifacts/prototype/evaluation.md) with per-class results, error counts, grouped uncertainty intervals, and leakage audits. Verification also writes [context challenge results](mindmate-algorithm/artifacts/prototype/context-evaluation.json) for negation, quotations, historical disclosures, and multi-turn safety replies.
 
-The frontend connects these results at `/admin` (live message tester), `/admin/overview` (service status and session tests), and `/admin/reports` (evaluation tables, uncertainty, audits and JSON export). Student chat attaches actionable support notices to each response and restores available notices when a saved conversation reopens. See the [integration guide](mindmate-chatbot/SUPPORT_SETUP.md) for the data and privacy boundaries.
+The frontend connects these results at `/admin/tester` (live message tester), `/model-lab` (owner-only service status and session tests), and `/model-lab/reports` (owner-only evaluation tables, uncertainty, audits and JSON export). The student support dashboard is at `/admin`. Student chat attaches actionable support notices to each response and restores available notices when a saved conversation reopens. See the [integration guide](mindmate-chatbot/SUPPORT_SETUP.md) for the data and privacy boundaries.
 
 `npm run dev` prepares local private support history automatically and keeps its discovered credential on the server. Existing chat data is preserved, and a monitored review queue is not enabled automatically.
 

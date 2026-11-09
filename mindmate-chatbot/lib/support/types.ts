@@ -1,5 +1,25 @@
 export const LEVELS = ["LOW", "MODERATE", "HIGH_CONCERN", "IMMEDIATE_SAFETY"] as const;
 export type SupportLevel = (typeof LEVELS)[number];
+// Keep persisted/model class keys stable; use these names and meanings for display.
+export const SUPPORT_PRIORITIES = {
+  LOW: {
+    label: "Low priority",
+    description: "Routine supportive response; no direct counselor attention indicated by the available message.",
+  },
+  MODERATE: {
+    label: "Moderate priority",
+    description: "Counselor attention recommended, but not urgently.",
+  },
+  HIGH_CONCERN: {
+    label: "High priority",
+    description: "Counselor attention recommended as soon as possible.",
+  },
+  IMMEDIATE_SAFETY: {
+    label: "Immediate attention",
+    description: "Potential safety-related content requiring priority human review.",
+  },
+} as const satisfies Record<SupportLevel, { label: string; description: string }>;
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type Scores = Record<SupportLevel, number>;
 

@@ -1,4 +1,4 @@
-"""Train a research/reviewed classifier, or an explicitly synthetic English prototype."""
+"""Train support-priority classification for research/reviewed use, or an explicitly synthetic English prototype."""
 import argparse
 import hashlib
 import json

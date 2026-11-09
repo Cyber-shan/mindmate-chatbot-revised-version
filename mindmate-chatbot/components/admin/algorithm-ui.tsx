@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { MetricInterval } from "@/lib/support/overview-types";
-import type { SupportLevel } from "@/lib/support/types";
+import { SUPPORT_PRIORITIES, type SupportLevel } from "@/lib/support/types";
 
-export const PRIORITIES: Record<SupportLevel, { label: string; color: string; background: string }> = {
-  LOW: { label: "Low", color: "var(--priority-low)", background: "var(--priority-low-surface)" },
-  MODERATE: { label: "Moderate", color: "var(--priority-moderate)", background: "var(--priority-moderate-surface)" },
-  HIGH_CONCERN: { label: "High concern", color: "var(--priority-high)", background: "var(--priority-high-surface)" },
-  IMMEDIATE_SAFETY: { label: "Immediate safety", color: "var(--priority-immediate)", background: "var(--priority-immediate-surface)" },
+export const PRIORITIES: Record<SupportLevel, { label: string; description: string; color: string; background: string }> = {
+  LOW: { ...SUPPORT_PRIORITIES.LOW, color: "var(--priority-low)", background: "var(--priority-low-surface)" },
+  MODERATE: { ...SUPPORT_PRIORITIES.MODERATE, color: "var(--priority-moderate)", background: "var(--priority-moderate-surface)" },
+  HIGH_CONCERN: { ...SUPPORT_PRIORITIES.HIGH_CONCERN, color: "var(--priority-high)", background: "var(--priority-high-surface)" },
+  IMMEDIATE_SAFETY: { ...SUPPORT_PRIORITIES.IMMEDIATE_SAFETY, color: "var(--priority-immediate)", background: "var(--priority-immediate-surface)" },
 };
 
 export function percent(value: number | null | undefined, digits = 2): string {

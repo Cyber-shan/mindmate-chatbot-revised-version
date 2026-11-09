@@ -1,4 +1,4 @@
-"""Local ML service. Safety rules and response policy stay in the Next.js server."""
+"""Local support-priority classification service. Safety rules and response policy stay in the Next.js server."""
 import argparse
 import hmac
 import json
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     classifier = Classifier(args.model) if args.model else None
     server = ThreadingHTTPServer((args.host, args.port), make_handler(classifier, token))
     server.timeout = 10
-    print(f"Distress classifier listening on {args.host}:{args.port}; model loaded: {bool(classifier)}")
+    print(f"Support-priority classification service listening on {args.host}:{args.port}; model loaded: {bool(classifier)}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

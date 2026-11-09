@@ -1,6 +1,15 @@
-# MindMate support-priority algorithm
+# MindMate support-priority classification
 
-This implements the supplied hybrid design: word and character TF-IDF with calibrated Logistic Regression, plus an independent safety-rule and conversation-policy layer in the Next.js chat server. The four labels are `LOW`, `MODERATE`, `HIGH_CONCERN`, and `IMMEDIATE_SAFETY`. They prioritize support; they do not diagnose a mental disorder.
+Support-priority classification identifies the recommended level of counselor attention from the available message and permitted conversation context. It supports human review and does not diagnose a mental disorder or assign clinical severity.
+
+| Category | Intended meaning | Internal key |
+|---|---|---|
+| **Low priority** | Routine supportive response; no direct counselor attention indicated by the available message. | `LOW` |
+| **Moderate priority** | Counselor attention recommended, but not urgently. | `MODERATE` |
+| **High priority** | Counselor attention recommended as soon as possible. | `HIGH_CONCERN` |
+| **Immediate attention** | Potential safety-related content requiring priority human review. | `IMMEDIATE_SAFETY` |
+
+The implementation uses word and character TF-IDF with calibrated Logistic Regression, plus an independent safety-rule and conversation-policy layer in the Next.js chat server. Internal keys remain stable for existing model artifacts, saved events, and API compatibility; visible categories use the names above. A counselor-attention recommendation does not mean someone has been contacted or that a review queue is available.
 
 The implementation includes a **working English synthetic-data prototype** and an independent rules-only fallback. It produces a trained classifier, probabilities, validation-selected demonstration thresholds, and evaluation artifacts. Synthetic evaluation measures this generated corpus only; it does not establish performance on real students or clinical validity. Prototype artifacts always retain `release_approved: false`.
 
@@ -47,7 +56,7 @@ Known limitations include over-prioritizing some persistent sadness or ambiguous
 
 `GET /health` identifies the loaded model, its mode, synthetic provenance, language, and prototype usability. `POST /predict` supplies the same provenance with four normalized class scores. The app accepts these scores only with explicit `DISTRESS_CLASSIFIER_MODE=prototype`, a loopback HTTP classifier URL, and the complete English prototype metadata. The launcher sets these options for its child processes without editing `.env.local`. Research artifacts remain ineligible; the normal reviewed-model path stays available.
 
-Use **Admin > Algorithm tester** to inspect decisions. A synthetic-prototype label appears when ML contributes. Direct immediate-safety rules bypass ML, so those decisions correctly show no contributing model. The prototype model also abstains when rules recognize negated, academic, idiomatic, historical, or third-party safety context; rules and conversation state decide those cases. Generated chatbot replies are instructed to use English.
+Use **Admin > Classification tester** to inspect decisions. A synthetic-prototype label appears when ML contributes. Direct safety rules requiring Immediate attention bypass ML, so those decisions correctly show no contributing model. The prototype model also abstains when rules recognize negated, academic, idiomatic, historical, or third-party safety context; rules and conversation state decide those cases. Generated chatbot replies are instructed to use English.
 
 ## Local setup
 

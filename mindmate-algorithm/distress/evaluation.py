@@ -175,7 +175,8 @@ def write_summary(metadata, path):
     def percent(value):
         return "Unavailable" if value is None else f"{100 * value:.2f}%"
 
-    lines = ["# Support-priority evaluation", "", f"Model: `{metadata['model_version']}`", "",
+    category_names = {"LOW": "Low priority", "MODERATE": "Moderate priority", "HIGH_CONCERN": "High priority", "IMMEDIATE_SAFETY": "Immediate attention"}
+    lines = ["# Support-priority classification evaluation", "", f"Model: `{metadata['model_version']}`", "",
              metadata["evaluation_scope"], "", "These are classifier-only results. Application context rules and multi-turn tests are evaluated separately.", "",
              f"Partition leakage audit passed: {metadata['partition_audit']['passed']}. Student, conversation, normalized text and template families are checked in both holdouts and calibration folds.", ""]
     for name in ("validation", "test"):
@@ -190,10 +191,10 @@ def write_summary(metadata, path):
         lines += ["", "| Class | Support | Precision | Recall | F1 | TP | FP | FN |", "|---|---:|---:|---:|---:|---:|---:|---:|"]
         for label in LABELS:
             values = metrics["per_class"][label]
-            lines.append(f"| {label} | {int(values['support'])} | {percent(values['precision'])} | {percent(values['recall'])} | {percent(values['f1-score'])} | {values['true_positive']} | {values['false_positive']} | {values['false_negative']} |")
+            lines.append(f"| {category_names[label]} | {int(values['support'])} | {percent(values['precision'])} | {percent(values['recall'])} | {percent(values['f1-score'])} | {values['true_positive']} | {values['false_positive']} | {values['false_negative']} |")
         counts = metrics["error_counts"]
         lines += ["", f"Incorrect: {counts['incorrect']}; under-prioritized: {counts['under_prioritized']}; over-prioritized: {counts['over_prioritized']}.",
-                  f"Immediate-safety misses: {counts['immediate_safety_false_negative']} of {counts['immediate_safety_actual']}; high-priority misses: {counts['high_priority_false_negative']} of {counts['high_priority_actual']}.",
+                  f"Immediate attention misses: {counts['immediate_safety_false_negative']} of {counts['immediate_safety_actual']}; High priority or Immediate attention misses: {counts['high_priority_false_negative']} of {counts['high_priority_actual']}.",
                   f"Low-confidence predictions: {metrics['uncertainty']['low_confidence_count']}; confidence threshold: {metrics['uncertainty']['confidence_threshold']}.",
                   f"Raw probability calibration error (ECE): {metrics['calibration']['ece_10_bins']:.4f}.", ""]
     lines += ["## Uncertainty limits", "", metadata["test"]["confidence_intervals"]["limitations"],

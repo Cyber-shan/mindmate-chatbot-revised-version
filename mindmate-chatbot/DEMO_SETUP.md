@@ -2,7 +2,7 @@
 
 This prototype uses the installed **Qwen3.5 4B** model through local Ollama. No hosted AI provider or model download is required by these optimizations.
 
-`npm run dev` automatically prepares or reuses the trained English support-priority classifier and starts its Python service with the rest of the app. The algorithm tester labels contributing model scores as a synthetic English prototype. `npm.cmd run verify:algorithm` exercises the trained classifier and policy without starting Supabase or Ollama. See the [algorithm guide](../mindmate-algorithm/README.md) for training and evaluation details.
+`npm run dev` automatically prepares or reuses the trained English support-priority classifier and starts its Python service with the rest of the app. The Classification tester labels contributing model scores as a synthetic English prototype. Support-priority classification identifies recommended counselor attention from the available message, using **Low priority**, **Moderate priority**, **High priority**, and **Immediate attention**. `npm.cmd run verify:algorithm` exercises the trained classifier and policy without starting Supabase or Ollama. See the [classification guide](../mindmate-algorithm/README.md) for category meanings, training, and evaluation details.
 
 ## Prepare before presenting
 
@@ -24,7 +24,7 @@ The launcher also prepares the local private support-history table and keeps its
 
 Support-history setup is optional for startup. If its CLI response, schema, credentials or privacy checks fail, the launcher prints a warning and still starts chat and the classifier. Saved support notices and review requests remain unavailable for that run. Repair the reported local setup issue and restart to retry; existing configuration files are preserved.
 
-The student support dashboard is at `/admin`; sign in through `/admin/login` using an approved staff account. It lists real saved detections in Immediate safety, High concern, Moderate, Low order, grouped once per student by their highest unresolved priority. It includes account reports, search, filters and CSV export. A local administrator can be created with `npm run create:admin`, which prints its generated password once and never changes existing accounts. The algorithm tester remains at `/admin/tester`.
+The student support dashboard is at `/admin`; sign in through `/admin/login` using an approved staff account. It lists real saved detections in Immediate attention, High priority, Moderate priority, Low priority order, grouped once per student by their highest unresolved priority. It includes account reports, search, filters and CSV export. A local administrator can be created with `npm run create:admin`, which prints its generated password once and never changes existing accounts. The Classification tester is at `/admin/tester`.
 
 Light/dark mode is shared across student sign-in, signup, chat, administrator sign-in, dashboards, reports and report drawers. Use the sun/moon button in the sign-in corner or app header. The choice is saved in this browser, survives navigation and sign-out, and synchronizes between tabs. With no saved choice, the app follows the system theme. If browser storage is blocked, the toggle still works for the current visit.
 
@@ -38,13 +38,13 @@ Press Ctrl+C to stop the app. The launcher also stops any Ollama or prototype cl
 
 ## Verify the demonstration
 
-Click **Admin sign in** on the login page to open the algorithm tester. Choose a sample message and click **Analyze message** to see the real support-priority decision, matched rules and context. **Run all examples** displays an expected-versus-actual comparison for the synthetic regression cases, including informal wording and split spellings. This prototype testing workspace does not require a separate admin account and does not read real student conversations.
+Click **Admin sign in** on the login page and sign in with an approved staff account, then open **Classification tester**. Choose a sample message and click **Analyze message** to see the real support-priority category, matched rules and context. **Run all examples** displays an expected-versus-actual comparison for the synthetic regression cases, including informal wording and split spellings. This testing workspace does not read real student conversations.
 
-The **Algorithm overview** page shows live connection status, saved evaluation metrics and your actual test decisions from this visit. **Evaluation reports** includes per-class errors, confusion matrices, uncertainty intervals, calibration, split audits, and context-check results. Its refresh button checks the live service; its export button downloads the sanitized report. Offline or stale data is labeled explicitly. Sample student screens remain separate from these real algorithm results.
+The owner-only **Classification overview** at `/model-lab` shows live connection status, saved evaluation metrics and your actual test decisions from this visit. **Evaluation reports** at `/model-lab/reports` includes per-class errors, confusion matrices, uncertainty intervals, calibration, split audits, and context-check results. Its refresh button checks the live service; its export button downloads the sanitized report. Offline or stale data is labeled explicitly. See [SUPPORT_SETUP.md](SUPPORT_SETUP.md) for owner access configuration.
 
 - Start a new chat and try an ordinary schoolwork concern; text should stream into the reply.
 - Confirm the completed messages remain in history after reopening the conversation.
-- In a fresh conversation, use a synthetic high-concern example and check the fixed safety check-in.
+- In a fresh conversation, use a synthetic High priority example and check the fixed safety check-in.
 - Confirm the support notice stays with that reply and clears from view when a new conversation opens. Reopening the thread restores the notice when local audit persistence is available.
 - Run `node scripts/verify-support-runtime.mjs` while the app is running to check the dedicated safety paths and wording variations without database records.
 

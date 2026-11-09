@@ -2,7 +2,7 @@
 
 Start the complete local setup from the main project folder or this folder with `npm.cmd run dev`. For an optimized defense presentation, use `npm.cmd run demo`. These commands prepare the required services and model automatically; `demo` also builds when source or build settings have changed. See [DEMO_SETUP.md](DEMO_SETUP.md).
 
-The chat API now runs the hybrid support-priority policy before generation. See [SUPPORT_SETUP.md](SUPPORT_SETUP.md) for safety rules, the optional TF-IDF/Logistic Regression service, clinician-review requirements, and private review-queue configuration.
+The chat API runs support-priority classification before generation to identify recommended counselor attention from the available message and conversation context. Its categories are **Low priority**, **Moderate priority**, **High priority**, and **Immediate attention**. See [SUPPORT_SETUP.md](SUPPORT_SETUP.md) for category meanings, safety rules, the optional TF-IDF/Logistic Regression service, clinician-review requirements, and private review-queue configuration.
 
 MindMate defaults to **Qwen3.5 4B**, served by Ollama. Install the model on the machine running Ollama:
 

@@ -126,7 +126,7 @@ class EvaluationIntegrityTests(unittest.TestCase):
             self.assertTrue(all(fold["passed"] for fold in result["calibration_audit"]))
             summary = (base / "model/evaluation.md").read_text()
             self.assertIn("95% group-bootstrap", summary)
-            self.assertIn("Immediate-safety misses", summary)
+            self.assertIn("Immediate attention misses", summary)
             self.assertNotIn("test-chat-0", summary)
             self.assertNotIn(fixture_rows()[0]["text"], summary)
 

@@ -124,6 +124,15 @@ test("prototype status never probes remote or credential-bearing services", asyn
 
 test("overview HTTP endpoint reads configured artifacts with no-store caching", async (t) => {
   configure(t);
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  for (const [key, value] of Object.entries({ MINDMATE_OWNER_USER_ID: ownerId, NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "publishable-test" })) {
+    const previous = process.env[key]; process.env[key] = value;
+    t.after(() => { if (previous === undefined) delete process.env[key]; else process.env[key] = previous; });
+  }
+  t.mock.method(globalThis, "fetch", async (input) => {
+    assert.equal(new URL(String(input)).pathname, "/auth/v1/user");
+    return Response.json({ id: ownerId, email: "owner@mindmate.local", app_metadata: { mindmate_role: "admin" } });
+  });
   const directory = await mkdtemp(path.join(tmpdir(), "mindmate-overview-test-"));
   const relative = path.relative(path.resolve(tmpdir()), path.resolve(directory));
   assert.ok(relative && !relative.startsWith("..") && !path.isAbsolute(relative));
@@ -131,9 +140,10 @@ test("overview HTTP endpoint reads configured artifacts with no-store caching", 
   process.env.MINDMATE_ALGORITHM_REPORT_DIR = directory;
   await writeFile(path.join(directory, "evaluation.json"), JSON.stringify(reportFixture()));
   await writeFile(path.join(directory, "context-evaluation.json"), JSON.stringify(contextFixture()));
-  const response = await GET(new Request("http://localhost/api/admin/algorithm/overview"));
+  const response = await GET(new Request("http://localhost/api/admin/algorithm/overview", { headers: { Authorization: "Bearer owner-session" } }));
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("vary"), "Authorization");
   const result = await response.json();
   assert.equal(result.evaluation.test.error_counts.incorrect, 0);
   assert.doesNotMatch(JSON.stringify(result), /PRIVATE/);

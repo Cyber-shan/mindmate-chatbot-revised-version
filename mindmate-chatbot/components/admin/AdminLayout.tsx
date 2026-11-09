@@ -9,13 +9,16 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
   { to: "/admin", label: "Student dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/tester", label: "Algorithm tester", icon: FlaskConical, end: true },
-  { to: "/admin/overview", label: "Algorithm overview", icon: LayoutGrid, end: true },
-  { to: "/admin/reports", label: "Evaluation reports", icon: FlagIcon, end: false },
+  { to: "/admin/tester", label: "Classification tester", icon: FlaskConical, end: true },
+];
+const PRIVATE_NAV = [
+  { to: "/model-lab", label: "Classification overview", icon: LayoutGrid, end: true },
+  { to: "/model-lab/reports", label: "Evaluation reports", icon: FlagIcon, end: true },
 ];
 
-export default function AdminLayout({ children }: {
+export default function AdminLayout({ children, privateTools = false }: {
   children: ReactNode;
+  privateTools?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -27,16 +30,16 @@ export default function AdminLayout({ children }: {
 
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar">
-      <div className="flex h-[60px] items-center gap-2 border-b border-border px-5">
-        <span className="font-serif text-xl text-foreground">MindMate</span>
-        <span className="rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-          Admin
+      <div className={`flex h-[60px] items-center gap-2 border-b border-border ${privateTools ? "px-4" : "px-5"}`}>
+        <span className="shrink-0 font-serif text-xl text-foreground">MindMate</span>
+        <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+          {privateTools ? "Model lab" : "Admin"}
         </span>
         <ThemeToggle className="ml-auto" />
       </div>
 
       <nav className="flex-1 space-y-1 p-3" aria-label="Admin">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {(privateTools ? PRIVATE_NAV : NAV).map(({ to, label, icon: Icon, end }) => (
           <Link
             key={to}
             href={to}
@@ -52,6 +55,7 @@ export default function AdminLayout({ children }: {
             <span className="flex-1">{label}</span>
           </Link>
         ))}
+        {privateTools && <Link href="/admin" className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"><LayoutDashboard className="size-4" aria-hidden /> Back to admin</Link>}
       </nav>
 
       <div className="border-t border-border p-3">
@@ -100,7 +104,7 @@ export default function AdminLayout({ children }: {
           >
             {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
-          <span className="font-serif text-lg">MindMate Admin</span>
+          <span className="font-serif text-lg">{privateTools ? "MindMate Model lab" : "MindMate Admin"}</span>
           <ThemeToggle className="ml-auto" />
         </header>
         {/* Contain absolutely positioned screen-reader text within this scroll area. */}
