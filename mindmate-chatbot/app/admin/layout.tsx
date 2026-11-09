@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { connection } from "next/server";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { createAdminData } from "@/components/admin/data";
 import { AlgorithmProvider } from "@/components/admin/AlgorithmProvider";
 import { StaffSessionProvider } from "@/components/admin/StaffSession";
 
@@ -9,7 +8,6 @@ export const metadata = { robots: { index: false, follow: false } };
 
 export default async function Layout({ children }: { children: ReactNode }) {
   await connection();
-  const { flags, trendData } = createAdminData();
 
   return (
     <>
@@ -20,7 +18,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
         precedence="admin-fonts"
       />
       <StaffSessionProvider><AlgorithmProvider>
-        <AdminLayout initialFlags={flags} trendData={trendData}>
+        <AdminLayout>
           {children}
         </AdminLayout>
       </AlgorithmProvider></StaffSessionProvider>

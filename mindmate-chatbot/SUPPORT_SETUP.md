@@ -75,7 +75,7 @@ Administrator setup also applies the reviewed, idempotent [`20261109090000_enabl
 
 The prototype algorithm tester moved to `/admin/tester`. It uses the same assessment function as student chat and evaluates only text supplied in the test form. It does not load student records or write review events. Use synthetic examples there.
 
-`/admin/overview` now shows live classifier health, saved training metrics, split audits, and actual test decisions from the current workspace visit. `/admin/reports` displays the saved validation and regression comparison, per-class errors, confusion matrices, grouped confidence intervals, calibration and context checks. Sample students remain explicitly labeled at `/admin/students`; their example drilldowns use `/admin/sample-reports`, separate from actual evaluation results. These pages do not read private student records or operate a counselor queue. No email, SMS, emergency-service call, automatic external notification or remote database change is performed.
+`/admin/overview` shows live classifier health, saved training metrics, split audits, and actual test decisions from the current workspace visit. `/admin/reports` displays the saved validation and regression comparison, per-class errors, confusion matrices, grouped confidence intervals, calibration and context checks. These evaluation pages do not read private student records or operate a counselor queue. No email, SMS, emergency-service call, automatic external notification or remote database change is performed.
 
 ## See decisions in the admin prototype
 

@@ -1,49 +1,27 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Flag as FlagIcon, FlaskConical, LayoutDashboard, LayoutGrid, LogOut, Menu, Users, X } from "lucide-react";
-import { type createTrendData, type Flag, type Status } from "./data";
+import { Flag as FlagIcon, FlaskConical, LayoutDashboard, LayoutGrid, LogOut, Menu, X } from "lucide-react";
 import { signOutStaff, useStaffSession } from "./StaffSession";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-export interface AdminContext {
-  flags: Flag[];
-  trendData: ReturnType<typeof createTrendData>;
-  updateFlag: (id: string, patch: Partial<Pick<Flag, "status" | "notes">>) => void;
-}
-
-const AdminStateContext = createContext<AdminContext | null>(null);
-
-export const useAdmin = () => {
-  const context = useContext(AdminStateContext);
-  if (!context) throw new Error("useAdmin must be used within AdminLayout");
-  return context;
-};
 
 const NAV = [
   { to: "/admin", label: "Student dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/tester", label: "Algorithm tester", icon: FlaskConical, end: true },
   { to: "/admin/overview", label: "Algorithm overview", icon: LayoutGrid, end: true },
   { to: "/admin/reports", label: "Evaluation reports", icon: FlagIcon, end: false },
-  { to: "/admin/students", label: "Sample students", icon: Users, end: false },
 ];
 
-export default function AdminLayout({ children, initialFlags, trendData }: {
+export default function AdminLayout({ children }: {
   children: ReactNode;
-  initialFlags: Flag[];
-  trendData: AdminContext["trendData"];
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [flags, setFlags] = useState<Flag[]>(initialFlags);
   const [menuOpen, setMenuOpen] = useState(false);
   const { session } = useStaffSession();
   const [signOutError, setSignOutError] = useState<string | null>(null);
-
-  const updateFlag: AdminContext["updateFlag"] = (id, patch) =>
-    setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
 
   if (pathname === "/admin/login") return <div className="admin-design min-h-screen">{children}</div>;
 
@@ -103,36 +81,32 @@ export default function AdminLayout({ children, initialFlags, trendData }: {
   );
 
   return (
-    <AdminStateContext.Provider value={{ flags, trendData, updateFlag }}>
-      <div className="admin-design flex h-screen w-full bg-background">
-        <aside className="hidden w-64 shrink-0 border-r border-border md:block">{sidebar}</aside>
+    <div className="admin-design flex h-screen w-full bg-background">
+      <aside className="hidden w-64 shrink-0 border-r border-border md:block">{sidebar}</aside>
 
-        {menuOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
-            <div className="absolute inset-0 bg-black/30" onClick={() => setMenuOpen(false)} />
-            <aside className="absolute inset-y-0 left-0 w-64 border-r border-border shadow-xl">{sidebar}</aside>
-          </div>
-        )}
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex h-[60px] items-center gap-3 border-b border-border px-4 md:hidden">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Toggle menu"
-              className="rounded-lg p-2 hover:bg-accent"
-            >
-              {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-            </button>
-            <span className="font-serif text-lg">MindMate Admin</span>
-            <ThemeToggle className="ml-auto" />
-          </header>
-          <main className="flex-1 overflow-y-auto">
-            {children}
-          </main>
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMenuOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-64 border-r border-border shadow-xl">{sidebar}</aside>
         </div>
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-[60px] items-center gap-3 border-b border-border px-4 md:hidden">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+            className="rounded-lg p-2 hover:bg-accent"
+          >
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+          <span className="font-serif text-lg">MindMate Admin</span>
+          <ThemeToggle className="ml-auto" />
+        </header>
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
-    </AdminStateContext.Provider>
+    </div>
   );
 }
-
-export type { Status };
