@@ -1,5 +1,5 @@
 {
-  "version": "mindmate-safety-rules-v2-draft",
+  "version": "mindmate-safety-rules-v3-draft",
   "review_status": "requires_clinician_review",
   "reviewer": null,
   "rules": [
@@ -8,6 +8,7 @@
       "level": "IMMEDIATE_SAFETY",
       "current_action": true,
       "patterns": [
+        "\\bi (?:can't|cannot|am unable to|am not able to) stop (?:hurting|harming|cutting) myself\\b",
         "\\bi (?:have |just |already |have already |have just )*(?:took|taken|swallowed) (?:too many|a lot of|all (?:of )?(?:my|the)) (?:pills|tablets|medication)\\b",
         "\\bi(?:'m| am) (?:currently )?(?:hurting|cutting|harming) myself(?: right now| now)?\\b",
         "\\bi (?:just |already |have just |have already )?(?:hurt|cut|harmed) myself\\b",
@@ -37,6 +38,8 @@
       "id": "passive_safety_concern",
       "level": "HIGH_CONCERN",
       "patterns": [
+        "\\bi(?:'m| am) (?:not sure|uncertain) (?:if |whether |that )?i can (?:stay|keep|remain) (?:myself )?safe\\b",
+        "\\bi (?:don't|do not) (?:think|know (?:if|whether)) i can (?:stay|keep|remain) (?:myself )?safe\\b",
         "\\bi (?:do not|don't|dont|no longer) want to (?:live|be alive|exist|wake up)\\b",
         "\\bi wish i (?:was|were) dead\\b",
         "\\bi (?:want|wish) to disappear(?: forever| for good)?\\b",

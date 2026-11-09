@@ -21,7 +21,7 @@ export const SUPPORT_EXAMPLES: SupportExample[] = [
   { id: "academic", title: "Academic context", message: "For our psychology assignment, what does self-harm mean?", history: [], expected: "LOW" },
   { id: "quoted-informal", title: "Quoted wording", message: 'For my assignment, explain the phrase "I wanna die".', history: [], expected: "LOW" },
   { id: "unclear-safety", title: "Unclear safety wording", message: "Lately I keep thinking about hurting my self.", history: [], expected: "HIGH_CONCERN" },
-  { id: "tagalog", title: "Tagalog", message: "Gusto kong magpakamatay.", history: [], expected: "IMMEDIATE_SAFETY" },
+  { id: "near-term", title: "Near-term intent", message: "I'm going to hurt myself tonight.", history: [], expected: "IMMEDIATE_SAFETY" },
   { id: "unsafe-reply", title: "Safety follow-up", message: "Not really", history: [
     { role: "user", content: "I feel completely hopeless." },
     { role: "assistant", content: "Are you safe right now?" },

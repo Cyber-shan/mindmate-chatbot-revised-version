@@ -26,7 +26,8 @@ def make_handler(classifier, token=""):
         def do_GET(self):
             if self.path != "/health":
                 return self.respond(404, {"error": "Not found"})
-            self.respond(200, {"ready": classifier is not None, "release_approved": bool(classifier and classifier.artifact["release_approved"])})
+            metadata = {"model_version": classifier.artifact["model_version"], **classifier.mode_metadata()} if classifier else {}
+            self.respond(200, {"ready": classifier is not None, "release_approved": bool(classifier and classifier.artifact["release_approved"]), **metadata})
 
         def do_POST(self):
             if self.path != "/predict":

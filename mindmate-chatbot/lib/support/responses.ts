@@ -19,7 +19,7 @@ export function safetyReply(decision: SupportDecision): string {
   return "Thank you for telling me; that sounds very difficult to carry. Are you safe right now? If you can, reach out to someone you trust or your school counselor so you have support with you." + resource;
 }
 
-export function studentSupport(decision: SupportDecision, queued: boolean): StudentSupport {
+export function studentSupport(decision: Pick<SupportDecision, "safety_response_required" | "requires_human_review">, queued: boolean): StudentSupport {
   return {
     safety_response_required: decision.safety_response_required,
     review_status: !decision.requires_human_review ? "not_required" : queued ? "queued" : "unavailable",

@@ -1,37 +1,22 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useLayoutEffect } from "react";
+import { useSyncExternalStore } from "react";
+import { isDarkTheme, subscribeTheme, toggleTheme } from "@/lib/theme";
+
+const serverTheme = () => false;
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  useLayoutEffect(() => {
-    const savedTheme = localStorage.getItem("mindmate-theme");
-    const theme =
-      savedTheme === "light" || savedTheme === "dark"
-        ? savedTheme
-        : document.documentElement.dataset.theme === "dark"
-          ? "dark"
-          : "light";
-
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme =
-      document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-
-    document.documentElement.dataset.theme = nextTheme;
-    document.documentElement.style.colorScheme = nextTheme;
-    localStorage.setItem("mindmate-theme", nextTheme);
-  };
+  const dark = useSyncExternalStore(subscribeTheme, isDarkTheme, serverTheme);
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
       aria-label="Toggle light and dark mode"
-      title="Toggle light and dark mode"
+      aria-pressed={dark}
+      title={`Switch to ${dark ? "light" : "dark"} mode`}
+      data-testid="theme-toggle"
       className={`theme-toggle ${className}`}
     >
       <span className="theme-icon theme-icon-light" aria-hidden="true">

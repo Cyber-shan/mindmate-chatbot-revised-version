@@ -22,4 +22,13 @@ class Classifier:
             "model_version": self.artifact["model_version"],
             "thresholds": self.artifact["thresholds"],
             "release_approved": self.artifact["release_approved"],
+            **self.mode_metadata(),
+        }
+
+    def mode_metadata(self) -> dict:
+        return {
+            "model_mode": self.artifact.get("model_mode", "reviewed" if self.artifact.get("release_approved") is True else "research"),
+            "synthetic_data": self.artifact.get("synthetic_data", False),
+            "language": self.artifact.get("language", "unspecified"),
+            "prototype_usable": self.artifact.get("prototype_usable", False),
         }

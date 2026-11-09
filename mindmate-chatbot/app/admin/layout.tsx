@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { connection } from "next/server";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { createAdminData } from "@/components/admin/data";
+import { AlgorithmProvider } from "@/components/admin/AlgorithmProvider";
+import { StaffSessionProvider } from "@/components/admin/StaffSession";
+
+export const metadata = { robots: { index: false, follow: false } };
 
 export default async function Layout({ children }: { children: ReactNode }) {
   await connection();
-  const { flags, trendData } = createAdminData();
 
   return (
     <>
@@ -15,9 +17,11 @@ export default async function Layout({ children }: { children: ReactNode }) {
         href="/admin/fonts.css"
         precedence="admin-fonts"
       />
-      <AdminLayout initialFlags={flags} trendData={trendData}>
-        {children}
-      </AdminLayout>
+      <StaffSessionProvider><AlgorithmProvider>
+        <AdminLayout>
+          {children}
+        </AdminLayout>
+      </AlgorithmProvider></StaffSessionProvider>
     </>
   );
 }

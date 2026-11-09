@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { readChatReply } from "@/lib/chat-stream";
 import { ChatTimings } from "@/lib/chat-performance";
 import type { StudentSupport } from "@/lib/support/types";
+import { parseStudentSupport, restoreStudentMessages, type StudentChatMessage } from "@/lib/support/student-history";
+import SupportNotice from "@/components/chat/SupportNotice";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Bot,
@@ -23,11 +25,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-type Message = {
-  id: string;
-  role: "user" | "ai";
-  text: string;
-};
+type Message = StudentChatMessage;
 
 type ConversationSummary = {
   id: string;
@@ -65,6 +63,7 @@ const RESPONSE_PROGRESS_STEPS: Array<{
 ];
 
 const PROCESSING_LABEL = "mindmate is working";
+const HISTORY_WINDOW = 200;
 
 const SUGGESTIONS = [
   { icon: Heart, label: "I've been feeling anxious lately" },
@@ -149,8 +148,8 @@ export default function Chat() {
   const [progressElapsedSeconds, setProgressElapsedSeconds] = useState(0);
   const [isProgressExpanded, setIsProgressExpanded] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [hasEarlierMessages, setHasEarlierMessages] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [support, setSupport] = useState<StudentSupport | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [showAccount, setShowAccount] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -158,7 +157,9 @@ export default function Chat() {
   const requestControllerRef = useRef<AbortController | null>(null);
   const messageIdRef = useRef(0);
   const historyRequestIdRef = useRef(0);
-  const isWelcome = messages.length === 0;
+  const authUserIdRef = useRef<string | null>(null);
+  const authEventVersionRef = useRef(0);
+  const isWelcome = messages.length === 0 && !isHistoryLoading;
   const conversationHistoryGroups = useMemo(
     () => groupConversationsByDay(conversations),
     [conversations],
@@ -203,14 +204,17 @@ export default function Chat() {
             : "Writing the response...";
 
   const refreshConversationHistory = useCallback(async () => {
+    const accountId = authUserIdRef.current;
+    if (!accountId) return;
     const requestId = ++historyRequestIdRef.current;
     const { data, error } = await supabase
       .from("conversations")
       .select("id, title, created_at, updated_at")
+      .eq("user_id", accountId)
       .order("updated_at", { ascending: false })
       .limit(50);
 
-    if (requestId !== historyRequestIdRef.current) return;
+    if (requestId !== historyRequestIdRef.current || accountId !== authUserIdRef.current) return;
     if (error) {
       setHistoryError("Unable to load your conversation history.");
       return;
@@ -222,42 +226,55 @@ export default function Chat() {
 
   useEffect(() => {
     let isMounted = true;
-
-    const loadUser = async () => {
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-
-      if (!isMounted) return;
-
-      if (!currentUser) {
-        router.replace("/login");
-        return;
+    const initialAuthVersion = authEventVersionRef.current;
+    const applyUser = (currentUser: SupabaseUser | null) => {
+      const accountId = currentUser?.id ?? null;
+      // A direct signed-in account switch is as much a privacy boundary as sign-out.
+      // Token refreshes for the same user preserve the active conversation.
+      if (accountId !== authUserIdRef.current) {
+        requestControllerRef.current?.abort();
+        requestControllerRef.current = null;
+        historyRequestIdRef.current += 1;
+        authUserIdRef.current = accountId;
+        setConversations([]);
+        setActiveConversationId(null);
+        setMessages([]);
+        setInput("");
+        setChatError(null);
+        setHistoryError(null);
+        setShowAccount(false);
+        setIsHistoryLoading(false);
+        setHasEarlierMessages(false);
+        setIsTyping(false);
+        setProgressStage(null);
+        setProgressElapsedSeconds(0);
+        setIsProgressExpanded(false);
       }
 
       setUser(currentUser);
-      void refreshConversationHistory();
+      if (currentUser) void refreshConversationHistory();
+      else router.replace("/login");
     };
-
-    void loadUser();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        void refreshConversationHistory();
-      } else {
-        historyRequestIdRef.current += 1;
-        setConversations([]);
-        setActiveConversationId(null);
-        setMessages([]);
-        router.replace("/login");
-      }
+      authEventVersionRef.current += 1;
+      // Keep the auth callback synchronous; do not wait on Supabase auth while its lock is held.
+      applyUser(session?.user ?? null);
     });
+
+    const loadUser = async () => {
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        // A newer auth event is authoritative over this potentially older network result.
+        if (isMounted && initialAuthVersion === authEventVersionRef.current) applyUser(currentUser);
+      } catch {
+        if (isMounted && initialAuthVersion === authEventVersionRef.current) applyUser(null);
+      }
+    };
+    void loadUser();
 
     return () => {
       isMounted = false;
@@ -297,7 +314,8 @@ export default function Chat() {
 
   const handleSend = async (text?: string) => {
     const msgText = (text ?? input).trim();
-    if (!msgText || isTyping || isHistoryLoading) return;
+    if (!user || user.id !== authUserIdRef.current) return;
+    if (!msgText || isTyping || isHistoryLoading || (requestControllerRef.current && !requestControllerRef.current.signal.aborted)) return;
     const timings = new ChatTimings();
     let firstReplyRecorded = false;
 
@@ -313,6 +331,7 @@ export default function Chat() {
     let createdConversation = false;
     let savedUserMessage = false;
     let localAssistantMessageId: string | null = null;
+    let responseSupport: StudentSupport | null = null;
 
     requestControllerRef.current = controller;
     setMessages(conversation);
@@ -381,6 +400,7 @@ export default function Chat() {
         .select("id, role, content, created_at")
         .single();
 
+      if (controller.signal.aborted) return;
       if (userMessageError || !storedUserMessage) {
         console.error("Unable to save user message:", userMessageError);
 
@@ -445,7 +465,7 @@ export default function Chat() {
           localAssistantMessageId = messageId;
           setMessages((previousMessages) => [
             ...previousMessages,
-            { id: messageId, role: "ai", text: content.trimStart() },
+            { id: messageId, role: "ai", text: content.trimStart(), ...(responseSupport ? { support: responseSupport } : {}) },
           ]);
         } else {
           const messageId = localAssistantMessageId;
@@ -455,7 +475,14 @@ export default function Chat() {
             ),
           );
         }
-      }, (value) => { if (!controller.signal.aborted) setSupport(value); });
+      }, (value) => {
+        if (controller.signal.aborted) return;
+        responseSupport = parseStudentSupport(value);
+        if (!responseSupport) return;
+        const support = responseSupport;
+        setMessages((previousMessages) => previousMessages.map((message) =>
+          message.id === storedUserMessage.id || message.id === localAssistantMessageId ? { ...message, support } : message));
+      });
 
       if (controller.signal.aborted) return;
       timings.record("reply_complete");
@@ -471,6 +498,7 @@ export default function Chat() {
         .select("id, role, content, created_at")
         .single());
 
+      if (controller.signal.aborted) return;
       if (assistantMessageError || !storedAssistantMessage) {
         console.error("Unable to save assistant message:", assistantMessageError);
         setChatError("MindMate replied, but the response could not be saved.");
@@ -524,60 +552,86 @@ export default function Chat() {
   };
 
   const loadConversation = async (conversationId: string) => {
-    setSupport(null);
+    if (!user || user.id !== authUserIdRef.current) return;
     requestControllerRef.current?.abort();
-    requestControllerRef.current = null;
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
     setIsProgressExpanded(false);
     setProgressStage(null);
     setIsTyping(false);
     setIsHistoryLoading(true);
     setChatError(null);
-
-    const { data, error } = await supabase
-      .from("messages")
-      .select("id, role, content, created_at")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Unable to load conversation:", error);
-      setChatError("Unable to open this conversation. Please try again.");
-      setIsHistoryLoading(false);
-      return;
-    }
-
-    const storedMessages = (data ?? []) as StoredMessage[];
-
     setActiveConversationId(conversationId);
-    setMessages(
-      storedMessages.map((message) => ({
-        id: message.id,
-        role: message.role === "assistant" ? "ai" : "user",
-        text: message.content,
-      })),
-    );
+    setMessages([]);
+    setHasEarlierMessages(false);
     setInput("");
-    setIsHistoryLoading(false);
+
+    // Support metadata is optional. A missing audit service must not prevent history from opening.
+    const loadSupport = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || controller.signal.aborted) return null;
+        const response = await fetch(`/api/chat/support?conversation_id=${encodeURIComponent(conversationId)}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(3000)]),
+        });
+        return response.ok ? await response.json() : null;
+      } catch { return null; }
+    };
+    try {
+      const [{ data, error }, supportHistory] = await Promise.all([
+        supabase.from("messages").select("id, role, content, created_at")
+          .eq("conversation_id", conversationId).order("created_at", { ascending: false })
+          .order("id", { ascending: false }).limit(HISTORY_WINDOW + 1).abortSignal(controller.signal),
+        loadSupport(),
+      ]);
+      if (controller.signal.aborted || requestControllerRef.current !== controller) return;
+      if (error) throw new Error("Unable to open this conversation. Please try again.");
+      const storedMessages = (data ?? []) as StoredMessage[];
+      setHasEarlierMessages(storedMessages.length > HISTORY_WINDOW);
+      setMessages(restoreStudentMessages(storedMessages.slice(0, HISTORY_WINDOW).reverse(), supportHistory));
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setChatError(error instanceof Error ? error.message : "Unable to open this conversation. Please try again.");
+      }
+    } finally {
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+        setIsHistoryLoading(false);
+      }
+    }
   };
 
   const resetChat = () => {
-    setSupport(null);
     requestControllerRef.current?.abort();
     requestControllerRef.current = null;
     setActiveConversationId(null);
     setMessages([]);
+    setHasEarlierMessages(false);
     setInput("");
     setChatError(null);
     setIsProgressExpanded(false);
     setProgressStage(null);
     setIsTyping(false);
+    setIsHistoryLoading(false);
   };
 
   const handleSignOut = async () => {
+    resetChat();
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();
   };
+
+  const renderChatError = () => chatError && (
+    <p
+      role="alert"
+      className="mb-2 rounded-xl px-3 py-2"
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-secondary)", fontSize: "0.75rem" }}
+    >
+      {chatError}
+    </p>
+  );
 
   const renderInputBar = (autoFocus = false) => {
     const canSend = !isTyping && !isHistoryLoading && input.trim().length > 0;
@@ -604,6 +658,7 @@ export default function Chat() {
       <input
         ref={autoFocus ? inputRef : undefined}
         type="text"
+        aria-label="Message MindMate"
         value={input}
         onChange={(event) => setInput(event.target.value)}
         maxLength={4000}
@@ -620,6 +675,7 @@ export default function Chat() {
       />
       <button
         type="submit"
+        aria-label="Send message"
         disabled={!canSend}
         className="flex-shrink-0 flex items-center justify-center rounded-xl transition-all active:scale-90"
         style={{
@@ -678,6 +734,7 @@ export default function Chat() {
         <div className="px-4 pt-4 pb-2 flex-shrink-0">
           <button
             onClick={resetChat}
+            aria-label="New conversation"
             className="w-full flex items-center justify-center gap-2 rounded-xl transition-all active:scale-[0.97]"
             style={{
               background: "var(--primary)",
@@ -912,6 +969,7 @@ export default function Chat() {
             <ThemeToggle />
             <button
               onClick={resetChat}
+              aria-label="New conversation"
               className="w-8 h-8 flex items-center justify-center rounded-lg"
               style={{ color: "var(--text-secondary)" }}
               onMouseEnter={(event) => (event.currentTarget.style.background = "var(--surface)")}
@@ -957,6 +1015,7 @@ export default function Chat() {
                 className="w-full"
                 style={{ maxWidth: "600px" }}
               >
+                {renderChatError()}
                 {renderInputBar(true)}
               </motion.div>
 
@@ -1001,9 +1060,14 @@ export default function Chat() {
             >
               <div className="flex-1 overflow-y-auto">
                 <div className="mx-auto w-full px-4 py-6 space-y-5" style={{ maxWidth: "680px" }}>
-                  {messages.map((message) => (
+                  {isHistoryLoading && <p role="status" aria-live="polite" className="py-6 text-center text-sm" style={{ color: "var(--text-secondary)" }}>Loading conversation…</p>}
+                  {hasEarlierMessages && <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>Some earlier messages are outside this view.</p>}
+                  {messages.map((message, index) => (
                     <motion.div
                       key={message.id}
+                      data-testid="chat-message"
+                      data-role={message.role}
+                      data-message-id={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
@@ -1026,8 +1090,9 @@ export default function Chat() {
                           <User size={14} style={{ color: "var(--text-strong)" }} />
                         </div>
                       )}
-                      <div
-                        className="max-w-[75%] md:max-w-[65%] px-4 py-3"
+                      <div className="max-w-[85%] min-w-0 md:max-w-[75%]">
+                        <div
+                        className="whitespace-pre-wrap break-words px-4 py-3"
                         style={{
                           fontSize: "0.875rem",
                           lineHeight: "1.65",
@@ -1045,6 +1110,8 @@ export default function Chat() {
                         }}
                       >
                         {message.text}
+                        </div>
+                        {message.support && (message.role === "ai" || messages[index + 1]?.role !== "ai") && <SupportNotice support={message.support} />}
                       </div>
                     </motion.div>
                   ))}
@@ -1052,6 +1119,7 @@ export default function Chat() {
                   <AnimatePresence>
                     {isTyping && progressStage && (
                       <motion.div
+                        data-testid="chat-progress"
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
@@ -1232,27 +1300,7 @@ export default function Chat() {
                 }}
               >
                 <div className="mx-auto w-full" style={{ maxWidth: "680px" }}>
-                  {support?.safety_response_required && (
-                    <aside aria-label="Human support" className="mb-3 rounded-xl border p-3 text-sm" style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--foreground)" }}>
-                      <p className="font-medium">You deserve support from a person, too.</p>
-                      <p className="mt-1 text-xs">{support.review_status === "queued" ? "A review request has been saved. A response is not guaranteed immediately; please reach out directly for urgent help." : "This chat has not contacted a counselor or emergency services. Please reach out to someone you trust or your school counselor."}</p>
-                      {support.resources.map((resource) => <a key={resource.href} href={resource.href} className="mt-2 block underline">{resource.label}</a>)}
-                    </aside>
-                  )}
-                  {chatError && (
-                    <p
-                      role="alert"
-                      className="mb-2 rounded-xl px-3 py-2"
-                      style={{
-                        background: "var(--surface)",
-                        border: "1px solid var(--border)",
-                        color: "var(--text-secondary)",
-                        fontSize: "0.75rem",
-                      }}
-                    >
-                      {chatError}
-                    </p>
-                  )}
+                  {renderChatError()}
                   {renderInputBar()}
                   <p
                     className="text-center mt-2.5 hidden md:block"
