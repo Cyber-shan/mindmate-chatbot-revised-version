@@ -8,6 +8,7 @@ import { getOllamaConfig } from "../lib/chat-config.ts";
 import { buildFingerprint, hiddenWindowsLaunchArgs, prepareLocalServices, requireLocalHttpUrl, safeStartupOutput, waitUntil } from "./local-startup.mjs";
 import { preparePrototypeClassifier } from "./classifier-startup.mjs";
 import { prepareOptionalLocalAudit } from "./local-audit.mjs";
+import { createHostedSupabaseReadinessCheck, isLocalSupabaseUrl, requirePublicSupabaseKey, requireSupabaseUrl } from "./supabase-startup.mjs";
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -86,7 +87,7 @@ async function stop(code) {
   if (stopping) return;
   stopping = true;
   await cleanup();
-  log("App stopped. Docker and Supabase remain available for the next run.");
+  log("App stopped.");
   process.exit(code);
 }
 process.once("SIGINT", () => { void stop(0); });
@@ -101,22 +102,27 @@ async function probe(url, headers = {}) {
 }
 
 async function main() {
-  const supabaseUrl = requireLocalHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase");
+  const supabaseUrl = requireSupabaseUrl(childEnv.NEXT_PUBLIC_SUPABASE_URL);
+  const hostedSupabase = !isLocalSupabaseUrl(supabaseUrl);
   const ollamaUrl = requireLocalHttpUrl(config.url, "Ollama");
-  const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!publicKey) throw new Error("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is missing in .env.local.");
-  log(`Starting the local ${demo ? "defense demo" : "development app"}...`);
-  if (prototype) await preparePrototypeClassifier({ root, env: childEnv, run, signal: controller.signal, log });
-  const supabaseReady = async () => {
+  const publicKey = requirePublicSupabaseKey(childEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+  const supabaseReady = hostedSupabase ? createHostedSupabaseReadinessCheck({ env: childEnv, signal: controller.signal }) : async () => {
     const results = await Promise.all([
-      probe(new URL("/auth/v1/health", supabaseUrl)),
+      probe(new URL("/auth/v1/health", supabaseUrl), { apikey: publicKey }),
       probe(new URL("/rest/v1/", supabaseUrl), { apikey: publicKey }),
     ]);
     return results.every(Boolean);
   };
+  log(`Starting the local ${demo ? "defense demo" : "development app"}...`);
+  if (hostedSupabase) {
+    log("Using hosted Supabase. Docker Desktop will not be started.");
+    await supabaseReady();
+  }
+  if (prototype) await preparePrototypeClassifier({ root, env: childEnv, run, signal: controller.signal, log });
   const ollamaReady = () => probe(new URL("/api/version", ollamaUrl));
   await prepareLocalServices({
     supabaseReady, ollamaReady, signal: controller.signal, log,
+    supabaseMode: hostedSupabase ? "hosted" : "local",
     ensureDocker: async () => {
       const docker = await findExecutable("docker", windows ? dockerCandidates : []);
       if (!docker) throw new Error("Docker Desktop is not installed or its Docker CLI cannot be found.");
@@ -145,7 +151,7 @@ async function main() {
     },
     warmup: () => run(process.execPath, [path.join(root, "scripts", "warmup-chat.mjs")], { inherit: true, timeoutMs: 130_000 }),
   });
-  await prepareOptionalLocalAudit({ root, env: childEnv, executeFile, signal: controller.signal, log });
+  if (!hostedSupabase) await prepareOptionalLocalAudit({ root, env: childEnv, executeFile, signal: controller.signal, log });
   const next = require.resolve("next/dist/bin/next");
   if (demo) {
     const marker = path.join(root, ".next", "mindmate-build.json");
@@ -158,7 +164,7 @@ async function main() {
       await writeFile(marker, JSON.stringify({ fingerprint }) + "\n");
     } else log("Reusing the existing optimized app build.");
   }
-  log(`Local services and chatbot model are ready${prototype ? ", including the synthetic prototype classifier" : ""}. Open the address shown below; press Ctrl+C to stop the app.`);
+  log(`Services and chatbot model are ready${prototype ? ", including the synthetic prototype classifier" : ""}. Open the address shown below; press Ctrl+C to stop the app.`);
   await run(process.execPath, [next, demo ? "start" : "dev", ...forwarded], { inherit: true });
 }
 

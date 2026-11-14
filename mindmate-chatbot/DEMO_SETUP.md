@@ -2,6 +2,8 @@
 
 This prototype uses the installed **Qwen3.5 4B** model through local Ollama. No hosted AI provider or model download is required by these optimizations.
 
+For **hosted Supabase without Docker**, complete [SUPABASE_SETUP.md](SUPABASE_SETUP.md) first. With a hosted HTTPS URL in `.env.local`, the same startup commands connect online and skip Docker and local database preparation. The local Supabase instructions below apply only to a local database URL.
+
 `npm run dev` automatically prepares or reuses the trained English support-priority classifier and starts its Python service with the rest of the app. The Classification tester labels contributing model scores as a synthetic English prototype. Support-priority classification identifies recommended counselor attention from the available message, using **Low priority**, **Moderate priority**, **High priority**, and **Immediate attention**. `npm.cmd run verify:algorithm` exercises the trained classifier and policy without starting Supabase or Ollama. See the [classification guide](../mindmate-algorithm/README.md) for category meanings, training, and evaluation details.
 
 ## Prepare before presenting
@@ -12,7 +14,7 @@ From either `Mindmate-Project` or `mindmate-chatbot`, run this one command:
 npm run dev
 ```
 
-The launcher checks the local services, starts Docker Desktop on Windows when needed, starts/reuses Supabase and Ollama, and prepares both the trained classifier and installed chatbot model. It starts MindMate with automatic code reloading. Wait for the terminal to show the application address before presenting.
+The launcher checks the configured Supabase project, starts/reuses local Ollama, and prepares both the trained classifier and installed chatbot model. When Supabase uses a local URL, it also starts Docker Desktop on Windows when needed and starts/reuses the database. It starts MindMate with automatic code reloading. Wait for the terminal to show the application address before presenting.
 
 For an optimized presentation build with the same classifier, `npm.cmd run prototype` remains an optional shortcut. It builds only when needed and reuses unchanged builds. `npm.cmd run demo` launches the optimized app using the classifier mode configured in the environment.
 
@@ -28,7 +30,7 @@ The student support dashboard is at `/admin`; sign in through `/admin/login` usi
 
 Light/dark mode is shared across student sign-in, signup, chat, administrator sign-in, dashboards, reports and report drawers. Use the sun/moon button in the sign-in corner or app header. The choice is saved in this browser, survives navigation and sign-out, and synchronizes between tabs. With no saved choice, the app follows the system theme. If browser storage is blocked, the toggle still works for the current visit.
 
-Docker Desktop must have completed its initial installation/setup, and Ollama, project dependencies and the configured Qwen model must already be installed. The launcher reuses running services, so they do not need to be opened manually each time. Existing environment settings are read from `mindmate-chatbot/.env.local`.
+Ollama, project dependencies and the configured Qwen model must already be installed. Docker Desktop is required only for local Supabase. The launcher reuses running services, so they do not need to be opened manually each time. Existing environment settings are read from `mindmate-chatbot/.env.local`.
 
 Open http://localhost:3000/chat and sign in with your prototype account. This project's Supabase Studio is at http://127.0.0.1:55123; its API is at http://127.0.0.1:55121. The model runs locally at http://127.0.0.1:11434.
 

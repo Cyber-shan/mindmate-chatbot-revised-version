@@ -52,11 +52,14 @@ export async function startSupabaseWithRetry(start, {
 /** Independent services start together; generation warm-up waits for both to be ready. */
 export async function prepareLocalServices({
   supabaseReady, ensureDocker, startSupabase, ollamaReady, startOllama, warmup,
-  log = () => {}, signal,
+  log = () => {}, signal, supabaseMode = "local",
 }) {
   await Promise.all([
     (async () => {
       if (await supabaseReady()) { log("Supabase is already ready."); return; }
+      if (supabaseMode === "hosted") {
+        throw new Error("Hosted Supabase is unavailable. Check your internet connection, project status and .env.local URL/key. Docker is not needed; see SUPABASE_SETUP.md.");
+      }
       await ensureDocker();
       log("Starting Supabase; initial startup can take a few minutes...");
       await startSupabaseWithRetry(startSupabase, { ready: supabaseReady, signal, log });

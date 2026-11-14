@@ -8,11 +8,12 @@ import { readChatReply } from "@/lib/chat-stream";
 import { ChatTimings } from "@/lib/chat-performance";
 import type { StudentSupport } from "@/lib/support/types";
 import { parseStudentSupport, restoreStudentMessages, type StudentChatMessage } from "@/lib/support/student-history";
-import SupportNotice from "@/components/chat/SupportNotice";
 import { ThemeToggle } from "@/components/theme-toggle";
+import ProfileIdentity from "@/components/chat/ProfileIdentity";
 import {
   Bot,
   ChevronDown,
+  GraduationCap,
   Headphones,
   Heart,
   LogOut,
@@ -859,37 +860,20 @@ export default function Chat() {
                       {initials}
                     </span>
                   </div>
-                  <div className="min-w-0">
-                    <p
-                      style={{
-                        fontSize: "0.8125rem",
-                        fontWeight: 600,
-                        color: "var(--foreground)",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {displayName}
-                    </p>
-                    <p
-                      className="truncate"
-                      style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.4 }}
-                    >
-                      {user?.email ?? ""}
-                    </p>
-                  </div>
+                  <ProfileIdentity name={displayName} email={user?.email ?? ""} />
                 </div>
                 <div className="px-3 py-2.5 space-y-2">
-                  {[
-                    { label: "Plan", value: "Free" },
-                    { label: "Member since", value: memberSince },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex items-center justify-between">
-                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{label}</span>
-                      <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--foreground)" }}>
-                        {value}
-                      </span>
-                    </div>
-                  ))}
+                  <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-1"
+                    style={{ fontSize: "0.6875rem", fontWeight: 600, background: "var(--surface-active)", color: "var(--text-strong)" }}>
+                    <GraduationCap size={13} aria-hidden="true" />
+                    Student
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Member since</span>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--foreground)" }}>
+                      {memberSince}
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1062,7 +1046,7 @@ export default function Chat() {
                 <div className="mx-auto w-full px-4 py-6 space-y-5" style={{ maxWidth: "680px" }}>
                   {isHistoryLoading && <p role="status" aria-live="polite" className="py-6 text-center text-sm" style={{ color: "var(--text-secondary)" }}>Loading conversation…</p>}
                   {hasEarlierMessages && <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>Some earlier messages are outside this view.</p>}
-                  {messages.map((message, index) => (
+                  {messages.map((message) => (
                     <motion.div
                       key={message.id}
                       data-testid="chat-message"
@@ -1111,7 +1095,6 @@ export default function Chat() {
                       >
                         {message.text}
                         </div>
-                        {message.support && (message.role === "ai" || messages[index + 1]?.role !== "ai") && <SupportNotice support={message.support} />}
                       </div>
                     </motion.div>
                   ))}

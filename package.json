@@ -8,6 +8,8 @@
     "train:algorithm": "npm --prefix mindmate-chatbot run train:algorithm",
     "verify:algorithm": "npm --prefix mindmate-chatbot run verify:algorithm",
     "create:admin": "npm --prefix mindmate-chatbot run create:admin --",
-    "setup:admin": "npm --prefix mindmate-chatbot run setup:admin"
+    "setup:admin": "npm --prefix mindmate-chatbot run setup:admin",
+    "check:supabase": "npm --prefix mindmate-chatbot run check:supabase",
+    "backup:supabase": "npm --prefix mindmate-chatbot run backup:supabase"
   }
 }

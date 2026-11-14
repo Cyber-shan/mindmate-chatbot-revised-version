@@ -7,18 +7,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import { requireLocalHttpUrl } from "./local-startup.mjs";
+import { isLocalSupabaseUrl, requireSupabaseUrl, verifyHostedSupabase } from "./supabase-startup.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 createRequire(import.meta.url)("@next/env").loadEnvConfig(root, true, { info() {}, error() {} });
 
-async function main() {
-  const args = process.argv.slice(2);
-  const prepareOnly = args.length === 1 && args[0] === "--prepare-only";
-  if (!prepareOnly && args.length && (args.length !== 2 || args[0] !== "--email")) throw new Error("Usage: npm run create:admin -- --email admin@mindmate.local, or npm run setup:admin for existing accounts.");
-  const email = (args[1] ?? "admin@mindmate.local").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) throw new Error("Enter a valid administrator email address.");
-  const configured = requireLocalHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL, "Supabase");
-  if (configured.pathname !== "/" || configured.search || configured.hash) throw new Error("Administrator setup requires the configured local Supabase HTTP origin.");
+async function prepareLocalAdmin(configured) {
   let status;
   try {
     const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, "node_modules", "supabase", "dist", "supabase.js"), "status", "--output", "json", "--workdir", root], { cwd: root, windowsHide: true, timeout: 20_000, maxBuffer: 1_000_000 });
@@ -40,6 +34,19 @@ $mindmate_staff_access$;`;
   try {
     await promisify(execFile)(process.execPath, [path.join(root, "node_modules", "supabase", "dist", "supabase.js"), "db", "query", "--local", "--output-format", "json", reviewedGrant, "--workdir", root], { cwd: root, windowsHide: true, timeout: 20_000, maxBuffer: 1_000_000 });
   } catch { throw new Error("Local staff-report read access could not be prepared. Start npm run dev and check the chat-history tables before retrying."); }
+  return key;
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const prepareOnly = args.length === 1 && args[0] === "--prepare-only";
+  if (!prepareOnly && args.length && (args.length !== 2 || args[0] !== "--email")) throw new Error("Usage: npm run create:admin -- --email admin@mindmate.local, or npm run setup:admin for existing accounts.");
+  const email = (args[1] ?? "admin@mindmate.local").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) throw new Error("Enter a valid administrator email address.");
+  const configured = requireSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key = isLocalSupabaseUrl(configured)
+    ? await prepareLocalAdmin(configured)
+    : (await verifyHostedSupabase()).key;
   if (prepareOnly) { process.stdout.write(JSON.stringify({ prepared: true, accounts_changed: false }) + "\n"); return; }
   const client = createClient(configured.origin, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -49,7 +56,7 @@ $mindmate_staff_access$;`;
   const { data, error } = await client.auth.admin.createUser({ email, password, email_confirm: true, app_metadata: { mindmate_role: "admin" }, user_metadata: { name: "MindMate Administrator" } });
   if (error || !data.user) {
     if (error?.code === "email_exists" || error?.code === "user_already_exists") throw new Error("This email already has an account. No existing password or role was changed. Use --email with a different administrator email.");
-    throw new Error("The local administrator account could not be created. No existing account was modified.");
+    throw new Error("The administrator account could not be created. No existing account was modified.");
   }
   // This is the newly generated account password only, never a Supabase service key.
   // It is intentionally printed once for the owner and never written to a file.
@@ -58,6 +65,6 @@ $mindmate_staff_access$;`;
 
 try { await main(); }
 catch (error) {
-  console.error(error instanceof Error ? error.message : "Local administrator setup failed.");
+  console.error(error instanceof Error ? error.message : "Administrator setup failed.");
   process.exitCode = 1;
 }

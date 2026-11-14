@@ -12,6 +12,8 @@
     "verify:algorithm": "node scripts/verify-algorithm.mjs",
     "create:admin": "node scripts/create-local-admin.mjs",
     "setup:admin": "node scripts/create-local-admin.mjs --prepare-only",
+    "check:supabase": "node scripts/check-supabase.mjs",
+    "backup:supabase": "node scripts/backup-local-supabase.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
