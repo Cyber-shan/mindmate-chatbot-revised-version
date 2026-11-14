@@ -1,11 +1,13 @@
 "use client";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bot, Eye, EyeOff, Check } from "lucide-react";
 import { motion } from "motion/react";
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export default function Signup() {
   const router = useRouter();
@@ -15,47 +17,60 @@ export default function Signup() {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [touched, setTouched] = useState({ password: false, confirm: false });
+  const [submitted, setSubmitted] = useState(false);
+  const passwordInput = useRef<HTMLInputElement>(null);
+  const confirmInput = useRef<HTMLInputElement>(null);
+  const passwordValid = form.password.length >= MIN_PASSWORD_LENGTH;
+  const passwordsMatch = form.confirm.length > 0 && form.password === form.confirm;
+  const passwordError = (touched.password || submitted) && !passwordValid;
+  const confirmError = (touched.confirm || submitted) && !passwordsMatch;
 
-  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.confirm) {
+    if (loading) return;
+    setSubmitted(true);
+    setError("");
+    if (!form.name.trim() || !form.email) {
       setError("Please fill in all fields.");
       return;
     }
-    if (form.password !== form.confirm) {
-      setError("Passwords don't match.");
+    if (!passwordValid) {
+      passwordInput.current?.focus();
+      return;
+    }
+    if (!passwordsMatch) {
+      confirmInput.current?.focus();
       return;
     }
     if (!agreed) {
       setError("Please accept the terms to continue.");
       return;
     }
-    setError("");
-setLoading(true);
-
-const supabase = createClient();
-
-const { error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-  options: {
-    data: {
-      name: form.name,
-    },
-  },
-});
-
-if (error) {
-  setError(error.message);
-  setLoading(false);
-  return;
-}
-
-router.push("/chat");
-router.refresh();
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { name: form.name.trim() } },
+      });
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      router.push("/chat");
+      router.refresh();
+    } catch {
+      setError("Unable to create your account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const inputBase: React.CSSProperties = {
@@ -82,8 +97,6 @@ router.refresh();
     e.currentTarget.style.borderColor = "var(--border)";
     e.currentTarget.style.background = "var(--surface-subtle)";
   };
-
-  const passwordsMatch = form.confirm.length > 0 && form.password === form.confirm;
 
   return (
     <div
@@ -142,11 +155,14 @@ router.refresh();
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full name */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
+            <label htmlFor="signup-name" style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Full name
             </label>
             <input
               type="text"
+              id="signup-name"
+              name="name"
+              required
               value={form.name}
               onChange={set("name")}
               placeholder="Alex Johnson"
@@ -159,11 +175,14 @@ router.refresh();
 
           {/* Email */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
+            <label htmlFor="signup-email" style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Email address
             </label>
             <input
               type="email"
+              id="signup-email"
+              name="email"
+              required
               value={form.email}
               onChange={set("email")}
               placeholder="you@example.com"
@@ -176,23 +195,35 @@ router.refresh();
 
           {/* Password */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
+            <label htmlFor="signup-password" style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Password
             </label>
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
+                ref={passwordInput}
+                id="signup-password"
+                name="password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                aria-describedby="signup-password-hint"
+                aria-invalid={passwordError}
                 value={form.password}
                 onChange={set("password")}
-                placeholder="Min. 8 characters"
+                placeholder="Choose a password"
                 autoComplete="new-password"
+                autoCapitalize="none"
+                spellCheck={false}
                 style={{ ...inputBase, paddingRight: "46px" }}
                 onFocus={onFocus}
-                onBlur={onBlur}
+                onBlur={(e) => { onBlur(e); setTouched((prev) => ({ ...prev, password: true })); }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                aria-controls="signup-password"
                 style={{
                   position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
                   color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer",
@@ -204,23 +235,37 @@ router.refresh();
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            <p id="signup-password-hint" aria-live="polite" className="mt-2 flex items-start gap-1.5"
+              style={{ fontSize: "0.75rem", lineHeight: 1.5, color: passwordError ? "var(--error)" : passwordValid ? "var(--success)" : "var(--text-muted)" }}>
+              {passwordValid && <Check size={14} className="mt-0.5 shrink-0" aria-hidden="true" />}
+              {passwordValid ? "Minimum length met." : "Use at least 8 characters."}
+            </p>
+            <p style={{ marginTop: 2, fontSize: "0.75rem", lineHeight: 1.5, color: "var(--text-muted)" }}>No required mix of capitals, numbers or symbols.</p>
           </div>
 
           {/* Confirm password */}
           <div>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
+            <label htmlFor="signup-confirm" style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-strong)", marginBottom: "7px" }}>
               Confirm password
             </label>
             <div style={{ position: "relative" }}>
               <input
                 type={showConfirm ? "text" : "password"}
+                ref={confirmInput}
+                id="signup-confirm"
+                name="confirmPassword"
+                required
+                aria-describedby="signup-confirm-hint"
+                aria-invalid={confirmError}
                 value={form.confirm}
                 onChange={set("confirm")}
                 placeholder="Repeat your password"
                 autoComplete="new-password"
+                autoCapitalize="none"
+                spellCheck={false}
                 style={{
                   ...inputBase,
-                  paddingRight: "46px",
+                  paddingRight: passwordsMatch ? "68px" : "46px",
                   ...(passwordsMatch ? { borderColor: "var(--success)", background: "var(--success-surface)" } : {}),
                 }}
                 onFocus={(e) => {
@@ -228,6 +273,7 @@ router.refresh();
                 }}
                 onBlur={(e) => {
                   if (!passwordsMatch) onBlur(e);
+                  setTouched((prev) => ({ ...prev, confirm: true }));
                 }}
               />
               {/* Match checkmark */}
@@ -246,6 +292,9 @@ router.refresh();
               <button
                 type="button"
                 onClick={() => setShowConfirm((v) => !v)}
+                aria-label={showConfirm ? "Hide confirmation password" : "Show confirmation password"}
+                aria-pressed={showConfirm}
+                aria-controls="signup-confirm"
                 style={{
                   position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
                   color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer",
@@ -257,13 +306,20 @@ router.refresh();
                 {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            <p id="signup-confirm-hint" aria-live="polite" className="mt-2"
+              style={{ fontSize: "0.75rem", lineHeight: 1.5, color: confirmError ? "var(--error)" : passwordsMatch ? "var(--success)" : "var(--text-muted)" }}>
+              {passwordsMatch ? "Passwords match." : confirmError ? (form.confirm ? "The passwords don’t match yet. Check both fields." : "Enter your password again to confirm it.") : "Enter the same password again."}
+            </p>
           </div>
 
           {/* Terms checkbox */}
           <div className="flex items-start gap-3 pt-1">
             <button
               type="button"
-              onClick={() => setAgreed((v) => !v)}
+              onClick={() => { setAgreed((v) => !v); setError(""); }}
+              role="checkbox"
+              aria-checked={agreed}
+              aria-label="Agree to the Terms of Service and Privacy Policy"
               className="flex-shrink-0 flex items-center justify-center rounded transition-all"
               style={{
                 width: "18px",
@@ -290,7 +346,7 @@ router.refresh();
 
           {/* Error */}
           {error && (
-            <p style={{ fontSize: "0.875rem", color: "var(--error)" }}>{error}</p>
+            <p role="alert" style={{ fontSize: "0.875rem", color: "var(--error)" }}>{error}</p>
           )}
 
           {/* Submit */}
