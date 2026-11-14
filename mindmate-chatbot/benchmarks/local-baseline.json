@@ -1,0 +1,72 @@
+{
+  "mode": "saved-conversation",
+  "model": "qwen3.5:4b",
+  "runs": [
+    {
+      "run": 1,
+      "coldStart": true,
+      "saveMs": 62.9,
+      "headersMs": 14305.3,
+      "firstTextMs": 14305.8,
+      "replyMs": 17570,
+      "completeWithSaveMs": 17582.9,
+      "model": "qwen3.5:4b",
+      "loadMs": 4371.7,
+      "promptMs": 9669.5,
+      "promptTokens": 149,
+      "outputTokens": 52,
+      "tokensPerSecond": 15.9,
+      "serverTiming": null
+    },
+    {
+      "run": 2,
+      "coldStart": false,
+      "saveMs": 20,
+      "headersMs": 173.6,
+      "firstTextMs": 173.8,
+      "replyMs": 1145.8,
+      "completeWithSaveMs": 1156.5,
+      "model": "qwen3.5:4b",
+      "loadMs": 9.6,
+      "promptMs": 58,
+      "promptTokens": 149,
+      "outputTokens": 51,
+      "tokensPerSecond": 52.4,
+      "serverTiming": null
+    },
+    {
+      "run": 3,
+      "coldStart": false,
+      "saveMs": 15.3,
+      "headersMs": 171.7,
+      "firstTextMs": 171.8,
+      "replyMs": 1028,
+      "completeWithSaveMs": 1036.7,
+      "model": "qwen3.5:4b",
+      "loadMs": 8.1,
+      "promptMs": 75.4,
+      "promptTokens": 149,
+      "outputTokens": 45,
+      "tokensPerSecond": 52.5,
+      "serverTiming": null
+    },
+    {
+      "run": 4,
+      "coldStart": false,
+      "saveMs": 16.6,
+      "headersMs": 165.5,
+      "firstTextMs": 165.8,
+      "replyMs": 1159.5,
+      "completeWithSaveMs": 1167.4,
+      "model": "qwen3.5:4b",
+      "loadMs": 8.1,
+      "promptMs": 67.9,
+      "promptTokens": 149,
+      "outputTokens": 53,
+      "tokensPerSecond": 53.3,
+      "serverTiming": null
+    }
+  ],
+  "warmMedianFirstTextMs": 171.8,
+  "warmMedianReplyMs": 1145.8
+}

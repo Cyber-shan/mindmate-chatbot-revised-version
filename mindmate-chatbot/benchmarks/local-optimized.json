@@ -1,0 +1,73 @@
+{
+  "mode": "saved-conversation",
+  "prepared": true,
+  "model": "qwen3.5:4b",
+  "runs": [
+    {
+      "run": 1,
+      "coldStart": false,
+      "saveMs": 56.4,
+      "headersMs": 442,
+      "firstTextMs": 442.9,
+      "replyMs": 1610.1,
+      "completeWithSaveMs": 1622.9,
+      "model": "qwen3.5:4b",
+      "loadMs": 8.7,
+      "promptMs": 194.8,
+      "promptTokens": 149,
+      "outputTokens": 57,
+      "tokensPerSecond": 48.5,
+      "serverTiming": "auth;dur=70.8, risk_state;dur=0.9, history;dur=12.2, classifier;dur=0.2, audit;dur=0.5, prepare;dur=99.6, ollama_headers;dur=215.6"
+    },
+    {
+      "run": 2,
+      "coldStart": false,
+      "saveMs": 22.4,
+      "headersMs": 190.5,
+      "firstTextMs": 190.8,
+      "replyMs": 1226.4,
+      "completeWithSaveMs": 1237.6,
+      "model": "qwen3.5:4b",
+      "loadMs": 8.8,
+      "promptMs": 78.1,
+      "promptTokens": 149,
+      "outputTokens": 50,
+      "tokensPerSecond": 48.2,
+      "serverTiming": "auth;dur=55, risk_state;dur=0.1, history;dur=7.5, classifier;dur=0, audit;dur=0.3, prepare;dur=65.9, ollama_headers;dur=94.9"
+    },
+    {
+      "run": 3,
+      "coldStart": false,
+      "saveMs": 19.7,
+      "headersMs": 186.2,
+      "firstTextMs": 186.4,
+      "replyMs": 1125.8,
+      "completeWithSaveMs": 1136.4,
+      "model": "qwen3.5:4b",
+      "loadMs": 8.3,
+      "promptMs": 84.2,
+      "promptTokens": 149,
+      "outputTokens": 46,
+      "tokensPerSecond": 48.9,
+      "serverTiming": "auth;dur=53.6, risk_state;dur=0.1, history;dur=6, classifier;dur=0, audit;dur=0.2, prepare;dur=60.8, ollama_headers;dur=99.7"
+    },
+    {
+      "run": 4,
+      "coldStart": false,
+      "saveMs": 17.3,
+      "headersMs": 177.4,
+      "firstTextMs": 177.5,
+      "replyMs": 1096.8,
+      "completeWithSaveMs": 1104.3,
+      "model": "qwen3.5:4b",
+      "loadMs": 10.5,
+      "promptMs": 72.5,
+      "promptTokens": 149,
+      "outputTokens": 45,
+      "tokensPerSecond": 48.9,
+      "serverTiming": "auth;dur=55.1, risk_state;dur=0.1, history;dur=6.8, classifier;dur=0, audit;dur=0.4, prepare;dur=63.3, ollama_headers;dur=91.8"
+    }
+  ],
+  "warmMedianFirstTextMs": 188.6,
+  "warmMedianReplyMs": 1176.1
+}

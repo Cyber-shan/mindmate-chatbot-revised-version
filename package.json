@@ -1,31 +1,13 @@
 {
-  "name": "mindmate-chatbot",
-  "version": "0.1.0",
+  "name": "mindmate-project",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.12.4",
-    "@supabase/supabase-js": "^2.112.0",
-    "lucide-react": "^1.25.0",
-    "motion": "^12.42.2",
-    "next": "^16.3.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.11",
-    "supabase": "^2.111.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev": "npm --prefix mindmate-chatbot run dev --",
+    "demo": "npm --prefix mindmate-chatbot run demo --",
+    "prototype": "npm --prefix mindmate-chatbot run prototype --",
+    "train:algorithm": "npm --prefix mindmate-chatbot run train:algorithm",
+    "verify:algorithm": "npm --prefix mindmate-chatbot run verify:algorithm",
+    "create:admin": "npm --prefix mindmate-chatbot run create:admin --",
+    "setup:admin": "npm --prefix mindmate-chatbot run setup:admin"
   }
 }
