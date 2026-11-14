@@ -13,11 +13,11 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.replace("\u2019", "'").replace("\u2018", "'")).strip().lower()
 
 
-def make_pipeline() -> Pipeline:
+def make_pipeline(*, regularization: float = 1.0, character_weight: float = 1.0) -> Pipeline:
     return Pipeline([
         ("features", FeatureUnion([
             ("word", TfidfVectorizer(preprocessor=normalize, ngram_range=(1, 2), min_df=2, max_df=0.98, sublinear_tf=True)),
             ("char", TfidfVectorizer(preprocessor=normalize, analyzer="char_wb", ngram_range=(3, 5), min_df=2, sublinear_tf=True)),
-        ])),
-        ("classifier", LogisticRegression(max_iter=3000, class_weight="balanced", random_state=42)),
+        ], transformer_weights={"word": 1.0, "char": character_weight})),
+        ("classifier", LogisticRegression(C=regularization, max_iter=3000, class_weight="balanced", random_state=42)),
     ])

@@ -1,5 +1,6 @@
 import { analyzeSafety, conversationState, ruleReviewStatus, ruleVersion, safeReply, unsafeReply } from "./safety.ts";
 import { higher, LEVELS, SUPPORT_PRIORITIES, type ChatMessage, type ConversationState, type ModelPrediction, type SupportDecision } from "./types.ts";
+import { hasPersonalDistress } from "./intent.ts";
 
 export function prioritize(message: string, history: ChatMessage[] = [], prediction: ModelPrediction | null = null, previous?: ConversationState): SupportDecision {
   const state = conversationState(history, previous);
@@ -9,7 +10,8 @@ export function prioritize(message: string, history: ChatMessage[] = [], predict
   const prototypeContext = safety.contexts.some((context) => ["negated", "academic_or_quoted", "ordinary_expression", "historical", "third_party", "involuntary_thoughts_or_action"].includes(context));
   // A text-only classifier cannot interpret an answer relative to the previous question.
   const contextReply = state.safety_question_active && (safeReply(message, state.safety_question_kind) || unsafeReply(message, state.safety_question_kind));
-  const model = contextReply || (prediction?.model_mode === "prototype" && prototypeContext) ? null : prediction;
+  const unsupportedPrototype = prediction?.model_mode === "prototype" && safety.level === "LOW" && !hasPersonalDistress(message);
+  const model = contextReply || unsupportedPrototype || (prediction?.model_mode === "prototype" && prototypeContext) ? null : prediction;
   if (safeReply(message, state.safety_question_kind) && (safety.level === "LOW" || safety.level === "MODERATE")) state.safety_question_active = false;
   let level = safety.level;
   let source: SupportDecision["source"] = "rules_only";
@@ -23,6 +25,9 @@ export function prioritize(message: string, history: ChatMessage[] = [], predict
     else if (model.scores.IMMEDIATE_SAFETY + model.scores.HIGH_CONCERN >= model.thresholds.high) mlLevel = higher(mlLevel, "HIGH_CONCERN");
     uncertain = confidence < model.thresholds.confidence;
     if (uncertain) mlLevel = higher(mlLevel, "MODERATE");
+    // Synthetic scores can recommend extra support, but cannot independently
+    // initiate a crisis workflow. Genuine rule/context safety signals retain priority.
+    if (model.model_mode === "prototype" && LEVELS.indexOf(mlLevel) > 1) mlLevel = "MODERATE";
     level = higher(level, mlLevel);
     source = uncertain ? "uncertain_model" : safety.level !== "LOW" ? "hybrid" : "ml";
   }

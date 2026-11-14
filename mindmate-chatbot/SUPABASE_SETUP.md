@@ -25,7 +25,7 @@ npm.cmd run backup:supabase
 
 If the local database is already running, only the backup command is needed. The backup command also works from the repository root.
 
-The command verifies that the running local Supabase project matches `.env.local`, then uses the database container's `pg_dump` to export a consistent snapshot of `auth.users`, `auth.identities`, `public.conversations`, `public.messages` and `public.support_events`. Password hashes and server-managed roles are included. No local records are modified or deleted.
+The command verifies that the running local Supabase project matches `.env.local`, then uses the database container's `pg_dump` to export a consistent snapshot of `auth.users`, `auth.identities`, `public.conversations`, `public.messages`, `public.support_events` and `public.support_review_history`. Apply the staff workflow migration to a local source before exporting. Password hashes, server-managed roles, staff notes and review history are included. No local records are modified or deleted.
 
 It prints the path to `mindmate-chatbot/backups/supabase-<timestamp>/restore-data.sql`. That directory is excluded from Git. The export contains private account and conversation data; keep it private. If export fails, fix the reported issue before proceeding.
 
@@ -37,7 +37,8 @@ select
   (select count(*) from auth.identities) as identities,
   (select count(*) from public.conversations) as conversations,
   (select count(*) from public.messages) as messages,
-  (select count(*) from public.support_events) as support_events;
+  (select count(*) from public.support_events) as support_events,
+  (select count(*) from public.support_review_history) as review_history;
 ```
 
 ## 3. Apply the schema to the empty hosted project
@@ -53,7 +54,7 @@ npx.cmd --no-install supabase db push --linked
 
 Replace `YOUR_PROJECT_REF` with the reference from the hosted URL. Supply the saved database password if prompted. Verify the linked project and dry-run output before pushing. These operations connect to hosted Supabase and do not need Docker.
 
-The three existing migrations create chat tables, student ownership policies, private support-event storage and staff read grants. Do not use `db reset` for this move. Migrations do not copy accounts or chat records; import the data next.
+The migrations create chat tables, student ownership policies, private support-event storage, staff read grants and the manual staff review workflow. Do not use `db reset` for this move. Migrations do not copy accounts or chat records; import the data next.
 
 ## 4. Import the records
 

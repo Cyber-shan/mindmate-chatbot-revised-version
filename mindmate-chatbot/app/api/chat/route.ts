@@ -5,6 +5,7 @@ import { safetyReply, studentSupport } from "../../../lib/support/responses.ts";
 import { ConversationError, loadConversation, recordDecision } from "../../../lib/support/store.ts";
 import { ChatTimings } from "../../../lib/chat-performance.ts";
 import { getOllamaConfig, SYSTEM_PROMPT } from "../../../lib/chat-config.ts";
+import { hasPersonalDistress } from "../../../lib/support/intent.ts";
 
 type OllamaResponse = {
   error?: string;
@@ -82,10 +83,10 @@ export async function POST(request: Request) {
     const latest = messages.at(-1)!;
     const history = messages.slice(0, -1);
     const decision = await timings.measure("classifier", () => assessSupport(latest.content, history, { signal: controller.signal, previous: context?.previous }));
-    const queued = await timings.measure("audit", () => recordDecision(decision, context));
-    timings.record("prepare");
-    const support = studentSupport(decision, queued);
+    const audit = timings.measure("audit", () => recordDecision(decision, context));
     if (decision.safety_response_required) {
+      const support = studentSupport(decision, await audit);
+      timings.record("prepare");
       cleanup();
       return new Response(`${JSON.stringify({ support })}\n${JSON.stringify({ message: { content: safetyReply(decision) }, done: true })}\n`, {
         headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no", "Server-Timing": timings.header() },
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       remainingCharacters -= message.content.length;
     }
 
-    const ollamaResponse = await timings.measure("ollama_headers", () => fetch(`${ollama.url}/api/chat`, {
+    const [ollamaResponse, queued] = await Promise.all([timings.measure("ollama_headers", () => fetch(`${ollama.url}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -113,17 +114,20 @@ export async function POST(request: Request) {
         think: false,
         keep_alive: ollama.keepAlive,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT + (decision.level === "MODERATE" ? "\nOffer structured support and suggest a trusted person or counselor when useful. Do not describe any classification or probability." : "") },
+          { role: "system", content: SYSTEM_PROMPT + (hasPersonalDistress(latest.content) ? "\nThe user is describing personal distress. Be empathetic and specific to what they said, with practical support. Do not describe classifications or probabilities." : "\nAnswer this request directly. Do not insert a mental-health check-in unless the user actually expresses distress or a safety concern.") },
           ...recentMessages,
         ],
         options: {
           num_ctx: ollama.contextTokens,
           num_predict: ollama.outputTokens,
-          temperature: 0.7,
+          temperature: 0.6,
+          num_thread: ollama.threads,
         },
       }),
       signal: controller.signal,
-    }));
+    })), audit]);
+    const support = studentSupport(decision, queued);
+    timings.record("prepare");
     if (process.env.CHAT_PERFORMANCE_LOGS === "true") console.info("chat_timing", timings.snapshot());
 
     if (!ollamaResponse.ok) {

@@ -13,6 +13,8 @@ The implementation uses word and character TF-IDF with calibrated Logistic Regre
 
 The implementation includes a **working English synthetic-data prototype** and an independent rules-only fallback. It produces a trained classifier, probabilities, validation-selected demonstration thresholds, and evaluation artifacts. Synthetic evaluation measures this generated corpus only; it does not establish performance on real students or clinical validity. Prototype artifacts always retain `release_approved: false`.
 
+The current `english-prototype-v3` adds ordinary conversation and varied distress examples only to training: 1,920 training messages plus the unchanged 320 validation and 320 test messages. Prototype training compares six sparse-model configurations using nested group-disjoint calibration entirely within training. Candidates must preserve baseline training-CV urgent recall before ranking by macro F1 and log loss. Search is sequential with two numerical-library threads. Selected settings and rejected candidates are recorded in `model_selection`; the reviewed-data path retains its existing configuration. See [the measured improvements and tradeoffs](../docs/ALGORITHM_IMPROVEMENTS.md), including the lower score on one existing regression metric.
+
 ```text
 Student message + saved conversation
     -> preserve original; normalize a copy
@@ -33,7 +35,7 @@ From the repository root or `mindmate-chatbot`:
 npm run dev
 ```
 
-`dev` automatically prepares or reuses a compatible synthetic English model, starts or verifies the classifier on loopback, and launches the development app with the existing local services. No separate classifier command or environment edit is needed. It uses the existing local Python environment and project dependencies; install the requirements below if the environment is missing. Docker, Supabase, and Ollama are needed for the full app.
+`dev` automatically prepares or reuses a compatible synthetic English model, starts or verifies the classifier on loopback, and launches the development app with the existing local services. No separate classifier command or environment edit is needed. It uses the existing local Python environment and project dependencies; install the requirements below if the environment is missing. Hosted Supabase supplies online authentication and storage; Python and Ollama still run locally. Docker is needed only if you deliberately choose local Supabase.
 
 `npm.cmd run prototype` is an optional shortcut for the same classifier with an optimized app build. `npm.cmd run train:algorithm` runs the English generator and training pipeline without the other app services, and `npm.cmd run verify:algorithm` checks the classifier and app policy without starting Supabase or Ollama.
 
@@ -56,7 +58,7 @@ Known limitations include over-prioritizing some persistent sadness or ambiguous
 
 `GET /health` identifies the loaded model, its mode, synthetic provenance, language, and prototype usability. `POST /predict` supplies the same provenance with four normalized class scores. The app accepts these scores only with explicit `DISTRESS_CLASSIFIER_MODE=prototype`, a loopback HTTP classifier URL, and the complete English prototype metadata. The launcher sets these options for its child processes without editing `.env.local`. Research artifacts remain ineligible; the normal reviewed-model path stays available.
 
-Use **Admin > Classification tester** to inspect decisions. A synthetic-prototype label appears when ML contributes. Direct safety rules requiring Immediate attention bypass ML, so those decisions correctly show no contributing model. The prototype model also abstains when rules recognize negated, academic, idiomatic, historical, or third-party safety context; rules and conversation state decide those cases. Generated chatbot replies are instructed to use English.
+Use **Admin > Classification tester** to inspect decisions. A synthetic-prototype label appears when ML contributes. Direct safety rules requiring Immediate attention bypass ML, so those decisions correctly show no contributing model. In prototype mode, ordinary requests without personal distress or independent rule concern skip ML; accepted synthetic scores are capped at Moderate priority, while rules and genuine conversation state retain higher priorities. The prototype model also abstains when rules recognize negated, academic, idiomatic, historical, or third-party safety context; rules and conversation state decide those cases. Generated chatbot replies are instructed to use English.
 
 ## Local setup
 

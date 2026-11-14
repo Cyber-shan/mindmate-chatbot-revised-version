@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { ChatMessage, ConversationState, StudentSupport, SupportDecision } from "./types.ts";
 import type { ChatTimings } from "../chat-performance.ts";
 import { studentSupport } from "./responses.ts";
+import { analyzeSafety } from "./safety.ts";
 
 export class ConversationError extends Error {
   status: number;
@@ -109,7 +110,7 @@ export async function loadConversation(request: Request, conversationId: unknown
   const getHistory = () => client.from("messages").select("id, role, content, conversations!inner(user_id)")
     .eq("conversation_id", conversationId).eq("conversations.user_id", user.id)
     .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(200);
-  const getState = async (): Promise<{ data: { decision: { state?: ConversationState } } | null }> => {
+  const getState = async (): Promise<{ data: { decision: { state?: ConversationState; model_mode?: string; source?: string; rules?: string[] } } | null }> => {
     if (!audit) return { data: null };
     const { data: last } = await audit.from("support_events").select("decision")
       .eq("conversation_id", conversationId).neq("message_id", messageId)
@@ -124,7 +125,14 @@ export async function loadConversation(request: Request, conversationId: unknown
   if (error) throw new ConversationError("Unable to load conversation messages.", 503);
   if (!data?.length) throw new ConversationError("Conversation not found.", 404);
   if (data[0].id !== messageId || data[0].role !== "user") throw new ConversationError("Please send the latest student message.", 409);
-  const previous: ConversationState | undefined = last?.decision?.state;
+  let previous: ConversationState | undefined = last?.decision?.state;
+  const suspectPrototypeState = last?.decision?.model_mode === "prototype"
+    || last?.decision?.source === "conversation_context" && last.decision.rules?.every((rule) => rule === "unsafe_safety_question_reply");
+  // Repair old synthetic-only escalations only when the complete canonical user
+  // history is available and contains no independent high/immediate safety signal.
+  // Preserve prior state for truncated histories and genuinely concerning messages.
+  if (suspectPrototypeState && data.length < 200 && data.at(-1)?.role === "user"
+    && !data.some((message) => message.role === "user" && ["HIGH_CONCERN", "IMMEDIATE_SAFETY"].includes(analyzeSafety(message.content).level))) previous = undefined;
   return { conversationId, messageId, messages: data.reverse().map(({ role, content }) => ({ role, content } as ChatMessage)), previous };
 }
 

@@ -1,6 +1,7 @@
 import { prioritize } from "./policy.ts";
 import { predict } from "./classifier.ts";
 import type { ChatMessage, ConversationState, SupportDecision } from "./types.ts";
+import { hasPersonalDistress } from "./intent.ts";
 
 /** Shared by student chat and the admin tester; safety overrides never wait for ML. */
 export async function assessSupport(
@@ -10,6 +11,8 @@ export async function assessSupport(
 ): Promise<SupportDecision> {
   const local = prioritize(message, history, null, options.previous);
   if (local.level === "IMMEDIATE_SAFETY") return local;
+  // The synthetic lexical model is not an intent detector for ordinary questions.
+  if (process.env.DISTRESS_CLASSIFIER_MODE === "prototype" && local.level === "LOW" && !hasPersonalDistress(message)) return local;
   const model = await predict(message, options.signal);
   return model ? prioritize(message, history, model, options.previous) : local;
 }

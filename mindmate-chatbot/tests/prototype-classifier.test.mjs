@@ -72,14 +72,14 @@ test("admin tester executes the prototype model and exposes synthetic provenance
   t.mock.method(globalThis, "fetch", async () => Response.json(prototype));
   const response = await POST(new Request("http://localhost/api/admin/algorithm", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: "Everything feels different lately" }),
+    body: JSON.stringify({ message: "I feel emotionally exhausted lately" }),
   }));
   const result = await response.json();
   assert.equal(response.status, 200);
-  assert.equal(result.decision.level, "HIGH_CONCERN");
+  assert.equal(result.decision.level, "MODERATE");
   assert.equal(result.decision.model_mode, "prototype");
   assert.equal(result.decision.confidence, 0.93);
-  assert.ok(result.response_preview);
+  assert.equal(result.decision.safety_response_required, false);
 });
 
 test("prototype failures fall back to rules and direct safety never waits for ML", async (t) => {

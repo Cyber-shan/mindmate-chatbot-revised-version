@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { getOllamaConfig } from "../lib/chat-config.ts";
 
 const require = createRequire(import.meta.url);
 require("@next/env").loadEnvConfig(process.cwd(), true, { info() {}, error() {} });
@@ -17,8 +18,7 @@ const prepare = args.includes("--prepare");
 const output = option("--output");
 if (!Number.isInteger(runs) || runs < 1 || runs > 20) throw new Error("--runs must be between 1 and 20.");
 const local = (url) => ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname);
-const ollamaUrl = process.env.OLLAMA_URL ?? "http://127.0.0.1:11434";
-const model = process.env.OLLAMA_MODEL ?? "qwen3.5:4b";
+const { url: ollamaUrl, model } = getOllamaConfig();
 const prompt = "I feel overwhelmed with schoolwork. Can you help?";
 const round = (ms) => Number(ms.toFixed(1));
 let admin;

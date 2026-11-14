@@ -79,7 +79,7 @@ test("a first-person disclosure takes precedence over third-party context", () =
 const model = (scores) => ({ scores, model_version: "test-fixture", model_mode: "reviewed", thresholds: { immediate: 0.2, high: 0.4, confidence: 0.6 } });
 for (const mode of ["reviewed", "prototype"]) {
   test(`confident moderate ${mode} predictions recommend nonurgent human review`, () => {
-    const result = prioritize("Something is wrong", [], {
+    const result = prioritize("I feel anxious today", [], {
       ...model({ LOW: 0.03, MODERATE: 0.94, HIGH_CONCERN: 0.02, IMMEDIATE_SAFETY: 0.01 }),
       model_mode: mode,
     });

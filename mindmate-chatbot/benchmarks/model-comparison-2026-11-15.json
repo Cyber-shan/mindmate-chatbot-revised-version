@@ -1,0 +1,158 @@
+{
+  "measured_at": "2026-11-15",
+  "hardware": {
+    "cpu": "AMD Ryzen 5 7535HS, 6 cores / 12 logical processors",
+    "ram_gib": 31.2,
+    "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+    "dedicated_vram_mib": 6141
+  },
+  "scope": "Direct local Ollama comparison, five synthetic English prompts per model, sequential, one resident model at a time. No database or browser latency. Single small batch, not a statistical quality ranking.",
+  "settings": {
+    "num_ctx": 2048,
+    "num_predict": 180,
+    "temperature": 0.6,
+    "think": false,
+    "num_thread": 4,
+    "seed": 42
+  },
+  "results": [
+    {
+      "model": "qwen3.5:4b",
+      "cold_first_text_ms": 9685,
+      "cold_load_ms": 9288,
+      "warm_median_first_text_ms": 194,
+      "warm_median_tokens_per_second": 46.55,
+      "warm_median_total_ms": 2153.5,
+      "truncated_replies": 0
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "cold_first_text_ms": 13959,
+      "cold_load_ms": 13739,
+      "warm_median_first_text_ms": 51,
+      "warm_median_tokens_per_second": 52.7,
+      "warm_median_total_ms": 2368,
+      "truncated_replies": 1
+    }
+  ],
+  "runs": [
+    {
+      "model": "qwen3.5:4b",
+      "prompt": "Hello",
+      "first_run_includes_load": true,
+      "first_text_ms": 9685,
+      "total_ms": 10284,
+      "tokens": 27,
+      "tokens_per_second": 45,
+      "load_ms": 9288,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "prompt": "What are the things that a person can do to not play games",
+      "first_run_includes_load": false,
+      "first_text_ms": 210,
+      "total_ms": 2274,
+      "tokens": 96,
+      "tokens_per_second": 46.5,
+      "load_ms": 9,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "prompt": "What are your thoughts on the current ongoing crisis",
+      "first_run_includes_load": false,
+      "first_text_ms": 195,
+      "total_ms": 1245,
+      "tokens": 49,
+      "tokens_per_second": 46.7,
+      "load_ms": 9,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "prompt": "I feel lonely and stressed today. Can you help?",
+      "first_run_includes_load": false,
+      "first_text_ms": 188,
+      "total_ms": 2139,
+      "tokens": 89,
+      "tokens_per_second": 45.6,
+      "load_ms": 9,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "prompt": "Help me plan a 45-minute study session without social media.",
+      "first_run_includes_load": false,
+      "first_text_ms": 193,
+      "total_ms": 2168,
+      "tokens": 92,
+      "tokens_per_second": 46.6,
+      "load_ms": 11,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "prompt": "Hello",
+      "first_run_includes_load": true,
+      "first_text_ms": 13959,
+      "total_ms": 14193,
+      "tokens": 12,
+      "tokens_per_second": 51.1,
+      "load_ms": 13739,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "prompt": "What are the things that a person can do to not play games",
+      "first_run_includes_load": false,
+      "first_text_ms": 50,
+      "total_ms": 2486,
+      "tokens": 126,
+      "tokens_per_second": 51.7,
+      "load_ms": 7,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "prompt": "What are your thoughts on the current ongoing crisis",
+      "first_run_includes_load": false,
+      "first_text_ms": 49,
+      "total_ms": 1758,
+      "tokens": 90,
+      "tokens_per_second": 52.7,
+      "load_ms": 8,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "prompt": "I feel lonely and stressed today. Can you help?",
+      "first_run_includes_load": false,
+      "first_text_ms": 56,
+      "total_ms": 2250,
+      "tokens": 116,
+      "tokens_per_second": 52.9,
+      "load_ms": 8,
+      "done_reason": "stop"
+    },
+    {
+      "model": "qwen3:4b-instruct",
+      "prompt": "Help me plan a 45-minute study session without social media.",
+      "first_run_includes_load": false,
+      "first_text_ms": 52,
+      "total_ms": 3468,
+      "tokens": 180,
+      "tokens_per_second": 52.7,
+      "load_ms": 8,
+      "done_reason": "length"
+    }
+  ],
+  "selected_model": "qwen3:4b-instruct",
+  "selected_model_residency_bytes": 2876160081,
+  "notes": [
+    "Token throughput improved; response lengths varied, so some complete replies were slower.",
+    "The candidate study-plan reply hit the comparison cap of 180 tokens. Production retains 256 tokens and now asks for under 120 words.",
+    "A separate updated-route multi-turn check completed all five replies without crisis routing or token truncation; empathy was used for the distress disclosure.",
+    "Cold loading remains noticeable; use launcher warm-up."
+  ]
+}

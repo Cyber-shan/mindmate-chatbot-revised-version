@@ -17,7 +17,7 @@ try {
     body: JSON.stringify({
       model: config.model, stream: false, think: false, keep_alive: config.keepAlive,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: "Hello." }],
-      options: { num_ctx: config.contextTokens, num_predict: 1 },
+      options: { num_ctx: config.contextTokens, num_predict: 1, num_thread: config.threads },
     }),
     signal: AbortSignal.timeout(120_000),
   });

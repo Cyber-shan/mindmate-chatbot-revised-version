@@ -8,12 +8,15 @@ from pathlib import Path
 import joblib
 import numpy as np
 import sklearn
+import threadpoolctl
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import GroupKFold
+from threadpoolctl import threadpool_limits
 
 from distress import LABELS
 from distress.dataset import leakage_groups, partition_audit, read_dataset, split_dataset
 from distress.evaluation import gate_failures, report, threshold_for_recall, write_summary
+from distress.selection import select_pipeline
 from distress.features import make_pipeline
 
 
@@ -69,8 +72,11 @@ def train(data_path: Path, output: Path, review_path: Path | None = None, *, pro
     if any({labels[i] for i in train_ids} != set(LABELS) or {labels[i] for i in calibration_ids} != set(LABELS) for train_ids, calibration_ids in folds):
         raise ValueError("Every grouped calibration fold must contain all four labels; add reviewed examples/groups.")
     calibration_audit = [partition_audit({"fit": [training[i] for i in fit], "calibration": [training[i] for i in calibration]}) for fit, calibration in folds]
-    model = CalibratedClassifierCV(make_pipeline(), method="sigmoid", cv=folds)
-    model.fit(texts, labels)
+    selection = select_pipeline(texts, labels, groups) if prototype else None
+    parameters = selection["selected"] if selection else {}
+    model = CalibratedClassifierCV(make_pipeline(**parameters), method="sigmoid", cv=folds, n_jobs=1)
+    with threadpool_limits(limits=2):
+        model.fit(texts, labels)
     # sklearn sorts classes alphabetically; explicitly restore policy order.
     class_indices = [list(model.classes_).index(label) for label in LABELS]
     scores = {name: model.predict_proba([row["text"] for row in rows])[:, class_indices] for name, rows in partitions.items() if name != "train"}
@@ -100,9 +106,9 @@ def train(data_path: Path, output: Path, review_path: Path | None = None, *, pro
             elif gate_failures(subgroup_metrics, review):
                 failures.append(f"subgroup:{subgroup}:release_gates")
     source_dir = Path(__file__).resolve().parent
-    code_paths = ("train.py", "distress/features.py", "distress/dataset.py", "distress/evaluation.py", "distress/synthetic.py")
+    code_paths = ["train.py"] + [str(path.relative_to(source_dir)) for path in sorted((source_dir / "distress").glob("*.py"))]
     code_digest = hashlib.sha256(b"".join((source_dir / path).read_bytes() for path in code_paths)).hexdigest()
-    dependencies = {"scikit_learn": sklearn.__version__, "numpy": np.__version__, "joblib": joblib.__version__}
+    dependencies = {"scikit_learn": sklearn.__version__, "numpy": np.__version__, "joblib": joblib.__version__, "threadpoolctl": threadpoolctl.__version__}
     model_mode = "prototype" if prototype else "reviewed" if review else "research"
     fingerprint = hashlib.sha256(json.dumps({"dataset": digest, "code": code_digest, "review": review, "dependencies": dependencies, "model_mode": model_mode}, sort_keys=True).encode()).hexdigest()
     version = f"distress-tfidf-lr-v1-{fingerprint[:12]}"
@@ -121,6 +127,7 @@ def train(data_path: Path, output: Path, review_path: Path | None = None, *, pro
         "prototype_gate_failures": prototype_failures,
         "evaluation_scope": "Synthetic English phrase-family regression holdout, reused during engineering development; not an untouched statistical test, real-world evaluation, or clinical validation." if synthetic_data else "Held-out dataset; institutional review is required before release.",
         "training_code_sha256": code_digest, "dependency_versions": dependencies,
+        "model_selection": selection,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "split_sizes": {name: len(rows) for name, rows in partitions.items()},
         "partition_audit": partition_audit(partitions), "calibration_audit": calibration_audit,

@@ -37,6 +37,7 @@ function backend(t, options = {}) {
       return options.authResponse?.() ?? Response.json(user);
     }
     assert.equal(headers.get("authorization"), `Bearer ${serverKey}`, "Only a server credential can read staff records");
+    if (url.pathname === "/auth/v1/admin/users") return Response.json({ users: [user] });
     if (url.pathname.startsWith("/auth/v1/admin/users/")) {
       if (options.identityFailure) return Response.json({ msg: "Unavailable" }, { status: 503 });
       const accountId = url.pathname.split("/").at(-1);
@@ -206,7 +207,7 @@ test("an empty database returns an empty real report rather than synthetic stude
   const report = await (await GET(request())).json();
   assert.deepEqual(report.students, []);
   assert.equal(report.total_detections, 0);
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3, "Empty dashboards read the staff directory but do not look up student profiles");
 });
 
 test("student reports use only that account's saved evidence and return restricted decision fields", async (t) => {

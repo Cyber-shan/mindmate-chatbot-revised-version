@@ -37,7 +37,7 @@ export async function classifierFingerprint(algorithmRoot) {
   const packageRoots = process.platform === "win32" ? [path.join(libraryRoot, "site-packages")]
     : (await readdir(libraryRoot).catch(() => [])).filter((entry) => entry.startsWith("python")).sort().map((entry) => path.join(libraryRoot, entry, "site-packages"));
   for (const packageRoot of packageRoots) {
-    const dependencies = (await readdir(packageRoot).catch(() => [])).filter((entry) => /^(?:scikit_learn|numpy|joblib)-.+\.dist-info$/.test(entry)).sort();
+    const dependencies = (await readdir(packageRoot).catch(() => [])).filter((entry) => /^(?:scikit_learn|numpy|joblib|threadpoolctl)-.+\.dist-info$/.test(entry)).sort();
     for (const entry of dependencies) {
       digest.update(entry);
       digest.update(await readFile(path.join(packageRoot, entry, "METADATA")));

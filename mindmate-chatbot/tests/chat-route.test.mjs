@@ -34,7 +34,8 @@ test("streams the first reply before Ollama completes and bounds prompt work", a
   assert.equal(payload.think, false);
   assert.equal(payload.options.num_ctx, 2048);
   assert.equal(payload.options.num_predict, 256);
-  assert.equal(payload.keep_alive, "30m");
+  assert.equal(payload.keep_alive, "5m");
+  assert.equal(payload.options.num_thread, 4);
   assert.match(response.headers.get("Server-Timing"), /prepare;dur=/);
   assert.match(response.headers.get("Server-Timing"), /ollama_headers;dur=/);
   assert.ok(payload.messages.slice(1).reduce((total, item) => total + item.content.length, 0) <= 6000);
@@ -56,6 +57,46 @@ test("rejects invalid messages without calling Ollama", async (t) => {
     assert.equal(response.status, 400);
   }
   assert.equal(fetch.mock.callCount(), 0);
+});
+
+test("saved chat starts generation while its bounded audit write is still pending", { timeout: 5000 }, async (t) => {
+  for (const [key, value] of Object.entries({ NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "public-test", SUPABASE_SERVICE_ROLE_KEY: "server-test", DISTRESS_CLASSIFIER_MODE: "prototype" })) {
+    const before = process.env[key]; process.env[key] = value;
+    t.after(() => { if (before === undefined) delete process.env[key]; else process.env[key] = before; });
+  }
+  const conversationId = "11111111-1111-4111-8111-111111111111";
+  const messageId = "22222222-2222-4222-8222-222222222222";
+  let releaseAudit;
+  let releaseGeneration;
+  let auditStarted = false;
+  const generationStarted = new Promise((resolve) => { releaseGeneration = resolve; });
+  const auditGate = new Promise((resolve) => { releaseAudit = resolve; });
+  t.after(() => releaseAudit());
+  t.mock.method(globalThis, "fetch", async (input, options) => {
+    const path = new URL(input).pathname;
+    if (path.endsWith("/user")) return Response.json({ id: "student" });
+    if (path.endsWith("/messages")) return Response.json([{ id: messageId, role: "user", content: "How can I reduce gaming?" }]);
+    if (path.endsWith("/support_events") && options.method === "POST") {
+      auditStarted = true;
+      await auditGate;
+      return Response.json([{ id: "event" }]);
+    }
+    if (path.endsWith("/support_events")) return Response.json(null);
+    if (path === "/api/chat") {
+      releaseGeneration();
+      return new Response('{"message":{"content":"Set a daily time limit."},"done":true}\n');
+    }
+    assert.fail("Unexpected request");
+  });
+  const responsePromise = POST(new Request("http://localhost/api/chat", {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer student" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "How can I reduce gaming?" }], conversationId, messageId }),
+  }));
+  await generationStarted;
+  await new Promise(setImmediate);
+  assert.equal(auditStarted, true);
+  releaseAudit();
+  assert.equal(await readChatReply(await responsePromise, () => {}), "Set a daily time limit.");
 });
 
 test("immediate safety replies bypass Ollama even when it is unavailable", async (t) => {

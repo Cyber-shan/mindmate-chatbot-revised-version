@@ -1,0 +1,2704 @@
+{
+  "scope": "Identical-message synthetic regression comparison. Reused engineering holdouts and curated challenge cases do not establish real-student or clinical accuracy.",
+  "held_out_text_and_groups_unchanged": true,
+  "challenge_scope": "Developer-authored English regression messages, not clinical labels or an independent population evaluation. Keep separate from training and hyperparameter selection.",
+  "challenge_sha256": "cdbe56d1e980553de40dc7daf537e83e826db4b6314825ab30eabb93b66fec65",
+  "holdout_sha256": "f0f6469f5a83271f6cbd456525e7cbf260a9ef6915bf9cd70391998bfd19ac0c",
+  "models": {
+    "baseline": {
+      "model_version": "distress-tfidf-lr-v1-6e7964c1a992",
+      "model_mode": "prototype",
+      "release_approved": false,
+      "split_sizes": {
+        "train": 1280,
+        "validation": 320,
+        "test": 320
+      },
+      "model_selection": null,
+      "artifact_bytes": 751960,
+      "validation": {
+        "sample_count": 320,
+        "accuracy_informational": 0.790625,
+        "macro_f1": 0.7803265842782263,
+        "immediate_recall": 1.0,
+        "combined_recall": 1.0,
+        "critical_false_negative_rate": 0.0,
+        "immediate_false_negative_rate": 0.0,
+        "combined_false_positive_rate": 0.16875,
+        "combined_f2": 0.9673518742442564,
+        "confusion_matrix": [
+          [
+            40,
+            30,
+            10,
+            0
+          ],
+          [
+            10,
+            53,
+            17,
+            0
+          ],
+          [
+            0,
+            0,
+            80,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            80
+          ]
+        ],
+        "class_order": [
+          "LOW",
+          "MODERATE",
+          "HIGH_CONCERN",
+          "IMMEDIATE_SAFETY"
+        ],
+        "per_class": {
+          "LOW": {
+            "precision": 0.8,
+            "recall": 0.5,
+            "f1-score": 0.6153846153846154,
+            "support": 80.0,
+            "true_positive": 40,
+            "false_positive": 10,
+            "false_negative": 40,
+            "true_negative": 230,
+            "predicted_count": 50,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "MODERATE": {
+            "precision": 0.6385542168674698,
+            "recall": 0.6625,
+            "f1-score": 0.6503067484662577,
+            "support": 80.0,
+            "true_positive": 53,
+            "false_positive": 30,
+            "false_negative": 27,
+            "true_negative": 210,
+            "predicted_count": 83,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "HIGH_CONCERN": {
+            "precision": 0.7476635514018691,
+            "recall": 1.0,
+            "f1-score": 0.8556149732620321,
+            "support": 80.0,
+            "true_positive": 80,
+            "false_positive": 27,
+            "false_negative": 0,
+            "true_negative": 213,
+            "predicted_count": 107,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "IMMEDIATE_SAFETY": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 80.0,
+            "true_positive": 80,
+            "false_positive": 0,
+            "false_negative": 0,
+            "true_negative": 240,
+            "predicted_count": 80,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "accuracy": 0.790625,
+          "macro avg": {
+            "precision": 0.7965544420673347,
+            "recall": 0.790625,
+            "f1-score": 0.7803265842782263,
+            "support": 320.0
+          },
+          "weighted avg": {
+            "precision": 0.7965544420673347,
+            "recall": 0.790625,
+            "f1-score": 0.7803265842782263,
+            "support": 320.0
+          }
+        },
+        "error_counts": {
+          "correct": 253,
+          "incorrect": 67,
+          "under_prioritized": 10,
+          "over_prioritized": 57,
+          "immediate_safety_actual": 80,
+          "immediate_safety_false_negative": 0,
+          "immediate_safety_false_positive": 0,
+          "high_priority_actual": 160,
+          "high_priority_false_negative": 0,
+          "high_priority_false_positive": 27,
+          "lower_priority_actual": 160
+        },
+        "uncertainty": {
+          "confidence_threshold": 0.4,
+          "low_confidence_count": 32,
+          "low_confidence_rate": 0.1,
+          "low_confidence_error_count": 21,
+          "mean_normalized_entropy": 0.708329186113693,
+          "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+        },
+        "confidence_intervals": {
+          "method": "whole-group percentile bootstrap",
+          "confidence_level": 0.95,
+          "resamples": 1000,
+          "seed": 42,
+          "sampling_unit": "connected student/conversation/template/text group",
+          "independent_group_count": 8,
+          "small_group_warning": true,
+          "limitations": "Approximate sampling variability for a fixed model and thresholds. Does not cover training, annotation error, dataset shift or clinical validity. Null bounds mean insufficient groups, unsupported classes, or no observed variation; perfect observations do not prove zero future errors.",
+          "metrics": {
+            "accuracy_informational": {
+              "lower": 0.665625,
+              "upper": 0.90625,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "macro_f1": {
+              "lower": 0.6230405639283711,
+              "upper": 0.9058823529411765,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "immediate_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "critical_false_negative_rate": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_false_positive_rate": {
+              "lower": 0.0,
+              "upper": 0.38125,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            }
+          },
+          "per_class": {
+            "LOW": {
+              "precision": {
+                "lower": 0.5714285714285714,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.125,
+                "upper": 0.875,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.2222222222222222,
+                "upper": 0.8571428571428571,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "MODERATE": {
+              "precision": {
+                "lower": 0.444047619047619,
+                "upper": 0.8751129518072288,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.3625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.41255794353139486,
+                "upper": 0.8464285714285712,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "HIGH_CONCERN": {
+              "precision": {
+                "lower": 0.5673758865248227,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "f1": {
+                "lower": 0.7239819004524887,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "recall": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "f1": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              }
+            }
+          }
+        },
+        "calibration": {
+          "ece_10_bins": 0.19242275253571828,
+          "multiclass_brier": 0.3093125109829322,
+          "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.30000000000000004,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.30000000000000004,
+              "upper": 0.4,
+              "sample_count": 32,
+              "mean_confidence": 0.3785624489948577,
+              "observed_accuracy": 0.34375
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "sample_count": 74,
+              "mean_confidence": 0.45854436055226083,
+              "observed_accuracy": 0.527027027027027
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6000000000000001,
+              "sample_count": 43,
+              "mean_confidence": 0.5582822527122613,
+              "observed_accuracy": 0.7441860465116279
+            },
+            {
+              "lower": 0.6000000000000001,
+              "upper": 0.7000000000000001,
+              "sample_count": 57,
+              "mean_confidence": 0.6632090786829896,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.7000000000000001,
+              "upper": 0.8,
+              "sample_count": 100,
+              "mean_confidence": 0.7448614402370375,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "sample_count": 14,
+              "mean_confidence": 0.8079454643054932,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            }
+          ]
+        }
+      },
+      "test": {
+        "sample_count": 320,
+        "accuracy_informational": 0.91875,
+        "macro_f1": 0.9195265819375062,
+        "immediate_recall": 0.9875,
+        "combined_recall": 0.975,
+        "critical_false_negative_rate": 0.025,
+        "immediate_false_negative_rate": 0.0125,
+        "combined_false_positive_rate": 0.0625,
+        "combined_f2": 0.967741935483871,
+        "confusion_matrix": [
+          [
+            70,
+            10,
+            0,
+            0
+          ],
+          [
+            0,
+            70,
+            10,
+            0
+          ],
+          [
+            0,
+            4,
+            75,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            79
+          ]
+        ],
+        "class_order": [
+          "LOW",
+          "MODERATE",
+          "HIGH_CONCERN",
+          "IMMEDIATE_SAFETY"
+        ],
+        "per_class": {
+          "LOW": {
+            "precision": 1.0,
+            "recall": 0.875,
+            "f1-score": 0.9333333333333333,
+            "support": 80.0,
+            "true_positive": 70,
+            "false_positive": 0,
+            "false_negative": 10,
+            "true_negative": 240,
+            "predicted_count": 70,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "MODERATE": {
+            "precision": 0.8333333333333334,
+            "recall": 0.875,
+            "f1-score": 0.8536585365853658,
+            "support": 80.0,
+            "true_positive": 70,
+            "false_positive": 14,
+            "false_negative": 10,
+            "true_negative": 226,
+            "predicted_count": 84,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "HIGH_CONCERN": {
+            "precision": 0.872093023255814,
+            "recall": 0.9375,
+            "f1-score": 0.9036144578313253,
+            "support": 80.0,
+            "true_positive": 75,
+            "false_positive": 11,
+            "false_negative": 5,
+            "true_negative": 229,
+            "predicted_count": 86,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "IMMEDIATE_SAFETY": {
+            "precision": 0.9875,
+            "recall": 0.9875,
+            "f1-score": 0.9875,
+            "support": 80.0,
+            "true_positive": 79,
+            "false_positive": 1,
+            "false_negative": 1,
+            "true_negative": 239,
+            "predicted_count": 80,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "accuracy": 0.91875,
+          "macro avg": {
+            "precision": 0.9232315891472869,
+            "recall": 0.91875,
+            "f1-score": 0.9195265819375062,
+            "support": 320.0
+          },
+          "weighted avg": {
+            "precision": 0.9232315891472869,
+            "recall": 0.91875,
+            "f1-score": 0.9195265819375061,
+            "support": 320.0
+          }
+        },
+        "error_counts": {
+          "correct": 294,
+          "incorrect": 26,
+          "under_prioritized": 5,
+          "over_prioritized": 21,
+          "immediate_safety_actual": 80,
+          "immediate_safety_false_negative": 1,
+          "immediate_safety_false_positive": 1,
+          "high_priority_actual": 160,
+          "high_priority_false_negative": 4,
+          "high_priority_false_positive": 10,
+          "lower_priority_actual": 160
+        },
+        "uncertainty": {
+          "confidence_threshold": 0.4,
+          "low_confidence_count": 25,
+          "low_confidence_rate": 0.078125,
+          "low_confidence_error_count": 6,
+          "mean_normalized_entropy": 0.7210975853069932,
+          "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+        },
+        "confidence_intervals": {
+          "method": "whole-group percentile bootstrap",
+          "confidence_level": 0.95,
+          "resamples": 1000,
+          "seed": 42,
+          "sampling_unit": "connected student/conversation/template/text group",
+          "independent_group_count": 8,
+          "small_group_warning": true,
+          "limitations": "Approximate sampling variability for a fixed model and thresholds. Does not cover training, annotation error, dataset shift or clinical validity. Null bounds mean insufficient groups, unsupported classes, or no observed variation; perfect observations do not prove zero future errors.",
+          "metrics": {
+            "accuracy_informational": {
+              "lower": 0.821796875,
+              "upper": 0.996875,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "macro_f1": {
+              "lower": 0.8198576522585186,
+              "upper": 0.996874877924919,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "immediate_recall": {
+              "lower": 0.9625,
+              "upper": 1.0,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "combined_recall": {
+              "lower": 0.925,
+              "upper": 1.0,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "critical_false_negative_rate": {
+              "lower": 0.0,
+              "upper": 0.075,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "combined_false_positive_rate": {
+              "lower": 0.0,
+              "upper": 0.1875,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            }
+          },
+          "per_class": {
+            "LOW": {
+              "precision": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "recall": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.7692307692307693,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "MODERATE": {
+              "precision": {
+                "lower": 0.6666666666666666,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.6578947368421053,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "HIGH_CONCERN": {
+              "precision": {
+                "lower": 0.6770833333333334,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.8125,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.7386363636363636,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": {
+                "lower": 0.9634146341463414,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.9625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.968944099378882,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            }
+          }
+        },
+        "calibration": {
+          "ece_10_bins": 0.3186160485685001,
+          "multiclass_brier": 0.2874655187233149,
+          "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.30000000000000004,
+              "sample_count": 6,
+              "mean_confidence": 0.2934090423663939,
+              "observed_accuracy": 0.3333333333333333
+            },
+            {
+              "lower": 0.30000000000000004,
+              "upper": 0.4,
+              "sample_count": 19,
+              "mean_confidence": 0.3684079834281341,
+              "observed_accuracy": 0.8947368421052632
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "sample_count": 62,
+              "mean_confidence": 0.4557339368217609,
+              "observed_accuracy": 0.7258064516129032
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6000000000000001,
+              "sample_count": 48,
+              "mean_confidence": 0.5374081050935113,
+              "observed_accuracy": 0.9375
+            },
+            {
+              "lower": 0.6000000000000001,
+              "upper": 0.7000000000000001,
+              "sample_count": 83,
+              "mean_confidence": 0.6505357062461873,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.7000000000000001,
+              "upper": 0.8,
+              "sample_count": 102,
+              "mean_confidence": 0.7376186448321155,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            }
+          ]
+        }
+      },
+      "challenge": {
+        "metrics": {
+          "sample_count": 64,
+          "accuracy_informational": 0.78125,
+          "macro_f1": 0.7310088796930903,
+          "immediate_recall": 1.0,
+          "combined_recall": 1.0,
+          "critical_false_negative_rate": 0.0,
+          "immediate_false_negative_rate": 0.0,
+          "combined_false_positive_rate": 0.1875,
+          "combined_f2": 0.963855421686747,
+          "confusion_matrix": [
+            [
+              3,
+              7,
+              5,
+              1
+            ],
+            [
+              1,
+              15,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              16,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              16
+            ]
+          ],
+          "class_order": [
+            "LOW",
+            "MODERATE",
+            "HIGH_CONCERN",
+            "IMMEDIATE_SAFETY"
+          ],
+          "per_class": {
+            "LOW": {
+              "precision": 0.75,
+              "recall": 0.1875,
+              "f1-score": 0.3,
+              "support": 16.0,
+              "true_positive": 3,
+              "false_positive": 1,
+              "false_negative": 13,
+              "true_negative": 47,
+              "predicted_count": 4,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "MODERATE": {
+              "precision": 0.6818181818181818,
+              "recall": 0.9375,
+              "f1-score": 0.7894736842105263,
+              "support": 16.0,
+              "true_positive": 15,
+              "false_positive": 7,
+              "false_negative": 1,
+              "true_negative": 41,
+              "predicted_count": 22,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "HIGH_CONCERN": {
+              "precision": 0.7619047619047619,
+              "recall": 1.0,
+              "f1-score": 0.8648648648648649,
+              "support": 16.0,
+              "true_positive": 16,
+              "false_positive": 5,
+              "false_negative": 0,
+              "true_negative": 43,
+              "predicted_count": 21,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": 0.9411764705882353,
+              "recall": 1.0,
+              "f1-score": 0.9696969696969697,
+              "support": 16.0,
+              "true_positive": 16,
+              "false_positive": 1,
+              "false_negative": 0,
+              "true_negative": 47,
+              "predicted_count": 17,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "accuracy": 0.78125,
+            "macro avg": {
+              "precision": 0.7837248535777948,
+              "recall": 0.78125,
+              "f1-score": 0.7310088796930903,
+              "support": 64.0
+            },
+            "weighted avg": {
+              "precision": 0.7837248535777948,
+              "recall": 0.78125,
+              "f1-score": 0.7310088796930903,
+              "support": 64.0
+            }
+          },
+          "error_counts": {
+            "correct": 50,
+            "incorrect": 14,
+            "under_prioritized": 1,
+            "over_prioritized": 13,
+            "immediate_safety_actual": 16,
+            "immediate_safety_false_negative": 0,
+            "immediate_safety_false_positive": 1,
+            "high_priority_actual": 32,
+            "high_priority_false_negative": 0,
+            "high_priority_false_positive": 6,
+            "lower_priority_actual": 32
+          },
+          "uncertainty": {
+            "confidence_threshold": 0.4,
+            "low_confidence_count": 6,
+            "low_confidence_rate": 0.09375,
+            "low_confidence_error_count": 6,
+            "mean_normalized_entropy": 0.6643073599155562,
+            "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+          },
+          "confidence_intervals": null,
+          "calibration": {
+            "ece_10_bins": 0.18111579203489536,
+            "multiclass_brier": 0.2898827817038291,
+            "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+            "bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.30000000000000004,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.30000000000000004,
+                "upper": 0.4,
+                "sample_count": 6,
+                "mean_confidence": 0.36204416410845336,
+                "observed_accuracy": 0.3333333333333333
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "sample_count": 7,
+                "mean_confidence": 0.4564102346289985,
+                "observed_accuracy": 0.5714285714285714
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6000000000000001,
+                "sample_count": 9,
+                "mean_confidence": 0.5478953878372327,
+                "observed_accuracy": 0.5555555555555556
+              },
+              {
+                "lower": 0.6000000000000001,
+                "upper": 0.7000000000000001,
+                "sample_count": 14,
+                "mean_confidence": 0.6487613987749737,
+                "observed_accuracy": 0.9285714285714286
+              },
+              {
+                "lower": 0.7000000000000001,
+                "upper": 0.8,
+                "sample_count": 20,
+                "mean_confidence": 0.7434597601764681,
+                "observed_accuracy": 1.0
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "sample_count": 8,
+                "mean_confidence": 0.8128836718875425,
+                "observed_accuracy": 1.0
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              }
+            ]
+          }
+        },
+        "cases": [
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "LOW",
+            "correct": false
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          }
+        ],
+        "by_category": {
+          "distress": {
+            "total": 16,
+            "correct": 15
+          },
+          "ordinary": {
+            "total": 16,
+            "correct": 3
+          },
+          "safety": {
+            "total": 16,
+            "correct": 16
+          },
+          "serious": {
+            "total": 16,
+            "correct": 16
+          }
+        }
+      },
+      "single_message_latency_ms": {
+        "median": 7.500699997763149,
+        "p95": 10.138894996998715,
+        "scope": "Sequential warmed in-process inference, two numerical-library threads; excludes HTTP/network."
+      }
+    },
+    "candidate": {
+      "model_version": "distress-tfidf-lr-v1-1dfb98092c81",
+      "model_mode": "prototype",
+      "release_approved": false,
+      "split_sizes": {
+        "train": 1920,
+        "validation": 320,
+        "test": 320
+      },
+      "model_selection": {
+        "scope": "Training partition only; nested group-disjoint calibration; synthetic engineering selection, not population validation.",
+        "selection_metric": "baseline_urgent_recall_floors_then_macro_f1_then_lower_log_loss",
+        "outer_folds": 3,
+        "inner_calibration_folds": 3,
+        "cpu_threads": 2,
+        "candidates": [
+          {
+            "parameters": {
+              "regularization": 1.0,
+              "character_weight": 1.0
+            },
+            "macro_f1": 0.7475240488534147,
+            "log_loss": 0.6740150102783737,
+            "immediate_recall": 0.9020833333333333,
+            "combined_recall": 0.90625,
+            "eligible": true
+          },
+          {
+            "parameters": {
+              "regularization": 1.0,
+              "character_weight": 0.35
+            },
+            "macro_f1": 0.7599681028555181,
+            "log_loss": 0.6789224114442322,
+            "immediate_recall": 0.8583333333333333,
+            "combined_recall": 0.915625,
+            "eligible": false
+          },
+          {
+            "parameters": {
+              "regularization": 8.0,
+              "character_weight": 1.0
+            },
+            "macro_f1": 0.7552061417110889,
+            "log_loss": 0.6737964864428515,
+            "immediate_recall": 0.8958333333333334,
+            "combined_recall": 0.9145833333333333,
+            "eligible": false
+          },
+          {
+            "parameters": {
+              "regularization": 8.0,
+              "character_weight": 0.35
+            },
+            "macro_f1": 0.7661806919119015,
+            "log_loss": 0.6744959439958722,
+            "immediate_recall": 0.875,
+            "combined_recall": 0.9177083333333333,
+            "eligible": false
+          },
+          {
+            "parameters": {
+              "regularization": 1.0,
+              "character_weight": 1.75
+            },
+            "macro_f1": 0.7484200308584646,
+            "log_loss": 0.7020166084843255,
+            "immediate_recall": 0.9166666666666666,
+            "combined_recall": 0.9166666666666666,
+            "eligible": true
+          },
+          {
+            "parameters": {
+              "regularization": 8.0,
+              "character_weight": 1.75
+            },
+            "macro_f1": 0.7600517452499094,
+            "log_loss": 0.7039298334051639,
+            "immediate_recall": 0.9145833333333333,
+            "combined_recall": 0.915625,
+            "eligible": true
+          }
+        ],
+        "selected": {
+          "regularization": 8.0,
+          "character_weight": 1.75
+        },
+        "status": "selected"
+      },
+      "artifact_bytes": 984310,
+      "validation": {
+        "sample_count": 320,
+        "accuracy_informational": 0.85,
+        "macro_f1": 0.848185440342303,
+        "immediate_recall": 1.0,
+        "combined_recall": 1.0,
+        "critical_false_negative_rate": 0.0,
+        "immediate_false_negative_rate": 0.0,
+        "combined_false_positive_rate": 0.0125,
+        "combined_f2": 0.9975062344139651,
+        "confusion_matrix": [
+          [
+            50,
+            28,
+            2,
+            0
+          ],
+          [
+            18,
+            62,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            80,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            80
+          ]
+        ],
+        "class_order": [
+          "LOW",
+          "MODERATE",
+          "HIGH_CONCERN",
+          "IMMEDIATE_SAFETY"
+        ],
+        "per_class": {
+          "LOW": {
+            "precision": 0.7352941176470589,
+            "recall": 0.625,
+            "f1-score": 0.6756756756756757,
+            "support": 80.0,
+            "true_positive": 50,
+            "false_positive": 18,
+            "false_negative": 30,
+            "true_negative": 222,
+            "predicted_count": 68,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "MODERATE": {
+            "precision": 0.6888888888888889,
+            "recall": 0.775,
+            "f1-score": 0.7294117647058823,
+            "support": 80.0,
+            "true_positive": 62,
+            "false_positive": 28,
+            "false_negative": 18,
+            "true_negative": 212,
+            "predicted_count": 90,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "HIGH_CONCERN": {
+            "precision": 0.975609756097561,
+            "recall": 1.0,
+            "f1-score": 0.9876543209876543,
+            "support": 80.0,
+            "true_positive": 80,
+            "false_positive": 2,
+            "false_negative": 0,
+            "true_negative": 238,
+            "predicted_count": 82,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "IMMEDIATE_SAFETY": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 80.0,
+            "true_positive": 80,
+            "false_positive": 0,
+            "false_negative": 0,
+            "true_negative": 240,
+            "predicted_count": 80,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "accuracy": 0.85,
+          "macro avg": {
+            "precision": 0.8499481906583772,
+            "recall": 0.85,
+            "f1-score": 0.848185440342303,
+            "support": 320.0
+          },
+          "weighted avg": {
+            "precision": 0.8499481906583771,
+            "recall": 0.85,
+            "f1-score": 0.848185440342303,
+            "support": 320.0
+          }
+        },
+        "error_counts": {
+          "correct": 272,
+          "incorrect": 48,
+          "under_prioritized": 18,
+          "over_prioritized": 30,
+          "immediate_safety_actual": 80,
+          "immediate_safety_false_negative": 0,
+          "immediate_safety_false_positive": 0,
+          "high_priority_actual": 160,
+          "high_priority_false_negative": 0,
+          "high_priority_false_positive": 2,
+          "lower_priority_actual": 160
+        },
+        "uncertainty": {
+          "confidence_threshold": 0.4,
+          "low_confidence_count": 12,
+          "low_confidence_rate": 0.0375,
+          "low_confidence_error_count": 10,
+          "mean_normalized_entropy": 0.5237317417677116,
+          "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+        },
+        "confidence_intervals": {
+          "method": "whole-group percentile bootstrap",
+          "confidence_level": 0.95,
+          "resamples": 1000,
+          "seed": 42,
+          "sampling_unit": "connected student/conversation/template/text group",
+          "independent_group_count": 8,
+          "small_group_warning": true,
+          "limitations": "Approximate sampling variability for a fixed model and thresholds. Does not cover training, annotation error, dataset shift or clinical validity. Null bounds mean insufficient groups, unsupported classes, or no observed variation; perfect observations do not prove zero future errors.",
+          "metrics": {
+            "accuracy_informational": {
+              "lower": 0.74375,
+              "upper": 0.96875,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "macro_f1": {
+              "lower": 0.7348240948132646,
+              "upper": 0.968342151675485,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "immediate_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "critical_false_negative_rate": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_false_positive_rate": {
+              "lower": 0.0,
+              "upper": 0.0375,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            }
+          },
+          "per_class": {
+            "LOW": {
+              "precision": {
+                "lower": 0.4838709677419355,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.25,
+                "upper": 0.875,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.36363636363636365,
+                "upper": 0.9333333333333333,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "MODERATE": {
+              "precision": {
+                "lower": 0.5,
+                "upper": 0.9090909090909091,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.5,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.5285854231974922,
+                "upper": 0.9333333333333333,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "HIGH_CONCERN": {
+              "precision": {
+                "lower": 0.9302325581395349,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "f1": {
+                "lower": 0.963855421686747,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "recall": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "f1": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              }
+            }
+          }
+        },
+        "calibration": {
+          "ece_10_bins": 0.1933107713124338,
+          "multiclass_brier": 0.21946174294457643,
+          "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.30000000000000004,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.30000000000000004,
+              "upper": 0.4,
+              "sample_count": 12,
+              "mean_confidence": 0.3589886528308663,
+              "observed_accuracy": 0.5
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "sample_count": 26,
+              "mean_confidence": 0.43681475918072415,
+              "observed_accuracy": 0.6923076923076923
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6000000000000001,
+              "sample_count": 34,
+              "mean_confidence": 0.5611089859008812,
+              "observed_accuracy": 0.35294117647058826
+            },
+            {
+              "lower": 0.6000000000000001,
+              "upper": 0.7000000000000001,
+              "sample_count": 40,
+              "mean_confidence": 0.6529583133004041,
+              "observed_accuracy": 0.8
+            },
+            {
+              "lower": 0.7000000000000001,
+              "upper": 0.8,
+              "sample_count": 106,
+              "mean_confidence": 0.7509845748325514,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "sample_count": 93,
+              "mean_confidence": 0.8569153078420441,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "sample_count": 9,
+              "mean_confidence": 0.9041544482672457,
+              "observed_accuracy": 1.0
+            }
+          ]
+        }
+      },
+      "test": {
+        "sample_count": 320,
+        "accuracy_informational": 0.9,
+        "macro_f1": 0.8994971489595172,
+        "immediate_recall": 1.0,
+        "combined_recall": 1.0,
+        "critical_false_negative_rate": 0.0,
+        "immediate_false_negative_rate": 0.0,
+        "combined_false_positive_rate": 0.0625,
+        "combined_f2": 0.9876543209876543,
+        "confusion_matrix": [
+          [
+            70,
+            10,
+            0,
+            0
+          ],
+          [
+            2,
+            68,
+            10,
+            0
+          ],
+          [
+            0,
+            0,
+            70,
+            10
+          ],
+          [
+            0,
+            0,
+            0,
+            80
+          ]
+        ],
+        "class_order": [
+          "LOW",
+          "MODERATE",
+          "HIGH_CONCERN",
+          "IMMEDIATE_SAFETY"
+        ],
+        "per_class": {
+          "LOW": {
+            "precision": 0.9722222222222222,
+            "recall": 0.875,
+            "f1-score": 0.9210526315789473,
+            "support": 80.0,
+            "true_positive": 70,
+            "false_positive": 2,
+            "false_negative": 10,
+            "true_negative": 238,
+            "predicted_count": 72,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "MODERATE": {
+            "precision": 0.8717948717948718,
+            "recall": 0.85,
+            "f1-score": 0.8607594936708861,
+            "support": 80.0,
+            "true_positive": 68,
+            "false_positive": 10,
+            "false_negative": 12,
+            "true_negative": 230,
+            "predicted_count": 78,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "HIGH_CONCERN": {
+            "precision": 0.875,
+            "recall": 0.875,
+            "f1-score": 0.875,
+            "support": 80.0,
+            "true_positive": 70,
+            "false_positive": 10,
+            "false_negative": 10,
+            "true_negative": 230,
+            "predicted_count": 80,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "IMMEDIATE_SAFETY": {
+            "precision": 0.8888888888888888,
+            "recall": 1.0,
+            "f1-score": 0.9411764705882353,
+            "support": 80.0,
+            "true_positive": 80,
+            "false_positive": 10,
+            "false_negative": 0,
+            "true_negative": 230,
+            "predicted_count": 90,
+            "precision_defined": true,
+            "recall_defined": true
+          },
+          "accuracy": 0.9,
+          "macro avg": {
+            "precision": 0.9019764957264957,
+            "recall": 0.9,
+            "f1-score": 0.8994971489595172,
+            "support": 320.0
+          },
+          "weighted avg": {
+            "precision": 0.9019764957264957,
+            "recall": 0.9,
+            "f1-score": 0.8994971489595172,
+            "support": 320.0
+          }
+        },
+        "error_counts": {
+          "correct": 288,
+          "incorrect": 32,
+          "under_prioritized": 2,
+          "over_prioritized": 30,
+          "immediate_safety_actual": 80,
+          "immediate_safety_false_negative": 0,
+          "immediate_safety_false_positive": 10,
+          "high_priority_actual": 160,
+          "high_priority_false_negative": 0,
+          "high_priority_false_positive": 10,
+          "lower_priority_actual": 160
+        },
+        "uncertainty": {
+          "confidence_threshold": 0.4,
+          "low_confidence_count": 7,
+          "low_confidence_rate": 0.021875,
+          "low_confidence_error_count": 6,
+          "mean_normalized_entropy": 0.5172730807357632,
+          "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+        },
+        "confidence_intervals": {
+          "method": "whole-group percentile bootstrap",
+          "confidence_level": 0.95,
+          "resamples": 1000,
+          "seed": 42,
+          "sampling_unit": "connected student/conversation/template/text group",
+          "independent_group_count": 8,
+          "small_group_warning": true,
+          "limitations": "Approximate sampling variability for a fixed model and thresholds. Does not cover training, annotation error, dataset shift or clinical validity. Null bounds mean insufficient groups, unsupported classes, or no observed variation; perfect observations do not prove zero future errors.",
+          "metrics": {
+            "accuracy_informational": {
+              "lower": 0.775,
+              "upper": 0.99375,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "macro_f1": {
+              "lower": 0.7709525171624714,
+              "upper": 0.9937490232848882,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            },
+            "immediate_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_recall": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "critical_false_negative_rate": {
+              "lower": null,
+              "upper": null,
+              "valid_resamples": 1000,
+              "status": "no_observed_variation"
+            },
+            "combined_false_positive_rate": {
+              "lower": 0.0,
+              "upper": 0.1875,
+              "valid_resamples": 1000,
+              "status": "estimated"
+            }
+          },
+          "per_class": {
+            "LOW": {
+              "precision": {
+                "lower": 0.9210526315789473,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.7575757575757576,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "MODERATE": {
+              "precision": {
+                "lower": 0.6938775510204082,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.6,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.6956521739130435,
+                "upper": 0.9873417721518988,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "HIGH_CONCERN": {
+              "precision": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "f1": {
+                "lower": 0.625,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": {
+                "lower": 0.7272727272727273,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              },
+              "recall": {
+                "lower": null,
+                "upper": null,
+                "valid_resamples": 1000,
+                "status": "no_observed_variation"
+              },
+              "f1": {
+                "lower": 0.8421052631578947,
+                "upper": 1.0,
+                "valid_resamples": 1000,
+                "status": "estimated"
+              }
+            }
+          }
+        },
+        "calibration": {
+          "ece_10_bins": 0.1844002640203012,
+          "multiclass_brier": 0.20025225540783875,
+          "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+          "bins": [
+            {
+              "lower": 0.0,
+              "upper": 0.1,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.1,
+              "upper": 0.2,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.2,
+              "upper": 0.30000000000000004,
+              "sample_count": 0,
+              "mean_confidence": null,
+              "observed_accuracy": null
+            },
+            {
+              "lower": 0.30000000000000004,
+              "upper": 0.4,
+              "sample_count": 7,
+              "mean_confidence": 0.3879722984194406,
+              "observed_accuracy": 0.14285714285714285
+            },
+            {
+              "lower": 0.4,
+              "upper": 0.5,
+              "sample_count": 34,
+              "mean_confidence": 0.4401190786931134,
+              "observed_accuracy": 0.5294117647058824
+            },
+            {
+              "lower": 0.5,
+              "upper": 0.6000000000000001,
+              "sample_count": 47,
+              "mean_confidence": 0.5572879138221536,
+              "observed_accuracy": 0.7872340425531915
+            },
+            {
+              "lower": 0.6000000000000001,
+              "upper": 0.7000000000000001,
+              "sample_count": 12,
+              "mean_confidence": 0.6199339039676484,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.7000000000000001,
+              "upper": 0.8,
+              "sample_count": 82,
+              "mean_confidence": 0.7579383641455376,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.8,
+              "upper": 0.9,
+              "sample_count": 130,
+              "mean_confidence": 0.8594129116561143,
+              "observed_accuracy": 1.0
+            },
+            {
+              "lower": 0.9,
+              "upper": 1.0,
+              "sample_count": 8,
+              "mean_confidence": 0.9046637192989877,
+              "observed_accuracy": 1.0
+            }
+          ]
+        }
+      },
+      "challenge": {
+        "metrics": {
+          "sample_count": 64,
+          "accuracy_informational": 0.921875,
+          "macro_f1": 0.9208516617790812,
+          "immediate_recall": 1.0,
+          "combined_recall": 1.0,
+          "critical_false_negative_rate": 0.0,
+          "immediate_false_negative_rate": 0.0,
+          "combined_false_positive_rate": 0.03125,
+          "combined_f2": 0.9937888198757764,
+          "confusion_matrix": [
+            [
+              13,
+              2,
+              1,
+              0
+            ],
+            [
+              2,
+              14,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              16,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              16
+            ]
+          ],
+          "class_order": [
+            "LOW",
+            "MODERATE",
+            "HIGH_CONCERN",
+            "IMMEDIATE_SAFETY"
+          ],
+          "per_class": {
+            "LOW": {
+              "precision": 0.8666666666666667,
+              "recall": 0.8125,
+              "f1-score": 0.8387096774193549,
+              "support": 16.0,
+              "true_positive": 13,
+              "false_positive": 2,
+              "false_negative": 3,
+              "true_negative": 46,
+              "predicted_count": 15,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "MODERATE": {
+              "precision": 0.875,
+              "recall": 0.875,
+              "f1-score": 0.875,
+              "support": 16.0,
+              "true_positive": 14,
+              "false_positive": 2,
+              "false_negative": 2,
+              "true_negative": 46,
+              "predicted_count": 16,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "HIGH_CONCERN": {
+              "precision": 0.9411764705882353,
+              "recall": 1.0,
+              "f1-score": 0.9696969696969697,
+              "support": 16.0,
+              "true_positive": 16,
+              "false_positive": 1,
+              "false_negative": 0,
+              "true_negative": 47,
+              "predicted_count": 17,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "IMMEDIATE_SAFETY": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1-score": 1.0,
+              "support": 16.0,
+              "true_positive": 16,
+              "false_positive": 0,
+              "false_negative": 0,
+              "true_negative": 48,
+              "predicted_count": 16,
+              "precision_defined": true,
+              "recall_defined": true
+            },
+            "accuracy": 0.921875,
+            "macro avg": {
+              "precision": 0.9207107843137254,
+              "recall": 0.921875,
+              "f1-score": 0.9208516617790812,
+              "support": 64.0
+            },
+            "weighted avg": {
+              "precision": 0.9207107843137254,
+              "recall": 0.921875,
+              "f1-score": 0.9208516617790812,
+              "support": 64.0
+            }
+          },
+          "error_counts": {
+            "correct": 59,
+            "incorrect": 5,
+            "under_prioritized": 2,
+            "over_prioritized": 3,
+            "immediate_safety_actual": 16,
+            "immediate_safety_false_negative": 0,
+            "immediate_safety_false_positive": 0,
+            "high_priority_actual": 32,
+            "high_priority_false_negative": 0,
+            "high_priority_false_positive": 1,
+            "lower_priority_actual": 32
+          },
+          "uncertainty": {
+            "confidence_threshold": 0.4,
+            "low_confidence_count": 1,
+            "low_confidence_rate": 0.015625,
+            "low_confidence_error_count": 1,
+            "mean_normalized_entropy": 0.4730197991402557,
+            "confidence_definition": "Maximum raw class probability; not the probability of the final threshold-adjusted support decision."
+          },
+          "confidence_intervals": null,
+          "calibration": {
+            "ece_10_bins": 0.19395046853471934,
+            "multiclass_brier": 0.14425538696274048,
+            "scope": "Raw class probabilities and argmax predictions, before policy thresholds.",
+            "bins": [
+              {
+                "lower": 0.0,
+                "upper": 0.1,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.1,
+                "upper": 0.2,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.2,
+                "upper": 0.30000000000000004,
+                "sample_count": 0,
+                "mean_confidence": null,
+                "observed_accuracy": null
+              },
+              {
+                "lower": 0.30000000000000004,
+                "upper": 0.4,
+                "sample_count": 1,
+                "mean_confidence": 0.3889308415996866,
+                "observed_accuracy": 1.0
+              },
+              {
+                "lower": 0.4,
+                "upper": 0.5,
+                "sample_count": 1,
+                "mean_confidence": 0.45916603533992156,
+                "observed_accuracy": 0.0
+              },
+              {
+                "lower": 0.5,
+                "upper": 0.6000000000000001,
+                "sample_count": 6,
+                "mean_confidence": 0.5253835746313521,
+                "observed_accuracy": 0.6666666666666666
+              },
+              {
+                "lower": 0.6000000000000001,
+                "upper": 0.7000000000000001,
+                "sample_count": 12,
+                "mean_confidence": 0.660513638992192,
+                "observed_accuracy": 0.9166666666666666
+              },
+              {
+                "lower": 0.7000000000000001,
+                "upper": 0.8,
+                "sample_count": 15,
+                "mean_confidence": 0.763091115053096,
+                "observed_accuracy": 1.0
+              },
+              {
+                "lower": 0.8,
+                "upper": 0.9,
+                "sample_count": 21,
+                "mean_confidence": 0.8463944628226692,
+                "observed_accuracy": 1.0
+              },
+              {
+                "lower": 0.9,
+                "upper": 1.0,
+                "sample_count": 8,
+                "mean_confidence": 0.919786205843911,
+                "observed_accuracy": 1.0
+              }
+            ]
+          }
+        },
+        "cases": [
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "HIGH_CONCERN",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "MODERATE",
+            "correct": false
+          },
+          {
+            "category": "ordinary",
+            "expected": "LOW",
+            "predicted": "LOW",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "LOW",
+            "correct": false
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "LOW",
+            "correct": false
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "distress",
+            "expected": "MODERATE",
+            "predicted": "MODERATE",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "serious",
+            "expected": "HIGH_CONCERN",
+            "predicted": "HIGH_CONCERN",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          },
+          {
+            "category": "safety",
+            "expected": "IMMEDIATE_SAFETY",
+            "predicted": "IMMEDIATE_SAFETY",
+            "correct": true
+          }
+        ],
+        "by_category": {
+          "distress": {
+            "total": 16,
+            "correct": 14
+          },
+          "ordinary": {
+            "total": 16,
+            "correct": 13
+          },
+          "safety": {
+            "total": 16,
+            "correct": 16
+          },
+          "serious": {
+            "total": 16,
+            "correct": 16
+          }
+        }
+      },
+      "single_message_latency_ms": {
+        "median": 7.0957500029180665,
+        "p95": 8.738235000055282,
+        "scope": "Sequential warmed in-process inference, two numerical-library threads; excludes HTTP/network."
+      }
+    }
+  }
+}

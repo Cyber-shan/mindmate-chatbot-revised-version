@@ -2,8 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SupportLevel } from "../support/types.ts";
 import { PRIORITY_ORDER, type DetectedAccount, type DetectionDashboard, type DetectionReportEntry, type PriorityCounts, type ReviewStatus, type StudentDetectionReport } from "./detection-types.ts";
 import { StaffReportError, uuid } from "./staff.ts";
+import { WORKFLOW_LABELS, type WorkflowStatus } from "./detection-types.ts";
+import { listStaffMembers } from "./reviews.ts";
 
-type Event = { id: string; student_id: string; conversation_id: string; message_id: string; level: SupportLevel; review_status: ReviewStatus; created_at: string };
+type Event = { id: string; student_id: string; conversation_id: string; message_id: string; level: SupportLevel; review_status: ReviewStatus; created_at: string; workflow_status: WorkflowStatus; assignee_id: string | null; workflow_version: number };
 type Identity = { name: string; email: string | null; available: boolean };
 const statuses = new Set(["not_required", "unconfigured", "pending", "reviewed", "resolved", "false_positive"]);
 const closed = new Set(["resolved", "false_positive"]);
@@ -30,6 +32,10 @@ function readEvent(value: unknown): Event {
     id: value.id as string, student_id: joined.user_id, conversation_id: value.conversation_id as string,
     message_id: value.message_id as string, level: value.level as SupportLevel,
     review_status: value.review_status as ReviewStatus, created_at: value.created_at,
+    workflow_status: typeof value.workflow_status === "string" && Object.hasOwn(WORKFLOW_LABELS, value.workflow_status) ? value.workflow_status as WorkflowStatus
+      : ["reviewed", "resolved", "false_positive"].includes(value.review_status as string) ? value.review_status as WorkflowStatus : "needs_review",
+    assignee_id: typeof value.assignee_id === "string" && uuid.test(value.assignee_id) ? value.assignee_id : null,
+    workflow_version: Number.isInteger(value.workflow_version) && (value.workflow_version as number) >= 0 ? value.workflow_version as number : 0,
   };
 }
 
@@ -41,12 +47,12 @@ async function readEvents(client: SupabaseClient, signal: AbortSignal, cutoff: s
   while (true) {
     signal.throwIfAborted();
     let query = client.from("support_events")
-      .select("id,conversation_id,message_id,level,review_status,created_at,conversations!inner(user_id)")
+      .select("id,conversation_id,message_id,level,review_status,created_at,workflow_status,assignee_id,workflow_version,conversations!inner(user_id)")
       .lte("created_at", cutoff).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1000);
     if (studentId) query = query.eq("conversations.user_id", studentId);
     if (cursor) query = query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`);
     const { data, error } = await query.retry(false);
-    if (error || !Array.isArray(data)) throw new StaffReportError("Saved detections could not be loaded. Check local support-history storage and try again.", 503);
+    if (error || !Array.isArray(data)) throw new StaffReportError("Saved detections could not be loaded. Check the staff review workflow migration and try again.", 503);
     if (data.length === 0) return events;
     const batch = data.map(readEvent);
     for (const event of batch) {
@@ -104,6 +110,9 @@ export function groupDetectedAccounts(events: Event[], profiles: Map<string, Ide
       latest_detection_at: chronological[chronological.length - 1].created_at, first_detection_at: chronological[0].created_at,
       total_detections: list.length, unresolved_detections: unresolved.length, conversation_count: new Set(list.map((event) => event.conversation_id)).size,
       unresolved_by_priority: byPriority,
+      workflow_status: unresolved[0]?.workflow_status ?? chronological[chronological.length - 1].workflow_status,
+      assignee_id: unresolved[0]?.assignee_id ?? null,
+      review_items: list.map((event) => ({ status: event.workflow_status, assignee_id: event.assignee_id, created_at: event.created_at })),
     };
   }).sort((a, b) => rank(a.priority) - rank(b.priority)
     || (a.priority_since && b.priority_since ? timeKey(a.priority_since).localeCompare(timeKey(b.priority_since)) : timeKey(b.latest_detection_at).localeCompare(timeKey(a.latest_detection_at)))
@@ -119,6 +128,7 @@ export async function loadDetectionDashboard(client: SupabaseClient, staff: { em
   for (const student of students) if (student.priority) accountsByPriority[student.priority]++;
   return {
     generated_at: generatedAt, staff, students, accounts_by_priority: accountsByPriority,
+    staff_members: await listStaffMembers(client, signal),
     total_detections: events.length, unresolved_detections: students.reduce((sum, student) => sum + student.unresolved_detections, 0),
     identity_unavailable: students.filter((student) => !student.identity_available).length,
     review_queue_enabled: process.env.SUPPORT_REVIEW_QUEUE_ENABLED === "true",
@@ -146,11 +156,12 @@ export async function loadStudentDetectionReport(client: SupabaseClient, student
     return {
       id: event.id, conversation_id: event.conversation_id, message_id: event.message_id,
       level: event.level, review_status: event.review_status, created_at: event.created_at,
+      workflow_status: event.workflow_status, assignee_id: event.assignee_id, workflow_version: event.workflow_version,
       message: typeof message?.content === "string" ? message.content.slice(0, 4000) : null,
       source: typeof decision?.source === "string" && sources.has(decision.source) ? decision.source : null,
       subject: decision?.subject === "student" || decision?.subject === "other" ? decision.subject : null,
       model_mode: decision?.model_mode === "prototype" || decision?.model_mode === "reviewed" ? decision.model_mode : null,
     };
   });
-  return { generated_at: generatedAt, student, events: entries, total_events: events.length, review_queue_enabled: process.env.SUPPORT_REVIEW_QUEUE_ENABLED === "true" };
+  return { generated_at: generatedAt, student, events: entries, total_events: events.length, review_queue_enabled: process.env.SUPPORT_REVIEW_QUEUE_ENABLED === "true", staff_members: await listStaffMembers(client, signal) };
 }

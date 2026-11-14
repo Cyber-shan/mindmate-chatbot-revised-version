@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { isLocalSupabaseUrl, requireSupabaseUrl } from "./supabase-startup.mjs";
 
-export const backupTables = ["auth.users", "auth.identities", "public.conversations", "public.messages", "public.support_events"];
+export const backupTables = ["auth.users", "auth.identities", "public.conversations", "public.messages", "public.support_events", "public.support_review_history"];
 
 export function buildRestoreSql(dump) {
   if (!dump.includes("-- PostgreSQL database dump complete")) throw new Error("The database export is incomplete. No backup was saved.");
@@ -52,7 +52,8 @@ begin
   if exists (select 1 from auth.identities i left join auth.users u on u.id = i.user_id where u.id is null)
     or exists (select 1 from public.conversations c left join auth.users u on u.id = c.user_id where u.id is null)
     or exists (select 1 from public.messages m left join public.conversations c on c.id = m.conversation_id where c.id is null)
-    or exists (select 1 from public.support_events e left join public.conversations c on c.id = e.conversation_id left join public.messages m on m.id = e.message_id where c.id is null or m.id is null) then
+    or exists (select 1 from public.support_events e left join public.conversations c on c.id = e.conversation_id left join public.messages m on m.id = e.message_id where c.id is null or m.id is null)
+    or exists (select 1 from public.support_review_history h left join public.support_events e on e.id = h.event_id where e.id is null) then
     raise exception 'Imported data has missing account or conversation links. The import was rolled back.';
   end if;
 end

@@ -11,7 +11,7 @@ from . import LABELS
 from .features import normalize
 
 
-GENERATOR_VERSION = "english-prototype-v2"
+GENERATOR_VERSION = "english-prototype-v3"
 FIELDS = ("text", "label", "student_id", "conversation_id", "split", "subgroup", "data_source", "language", "template_family")
 
 # A phrase family appears in exactly one split. Contextual variations never move
@@ -256,6 +256,83 @@ CONTEXTS = (
     "I am trying to put my feelings into words.",
 )
 
+# Training-only additions. Existing validation/test message text stays frozen.
+# These draft labels exercise the prototype and are not clinician annotations.
+TRAINING_EXTENSIONS = {
+    "LOW": (
+        "Hi, I would like to have a casual conversation.",
+        "How do I limit my gaming time without deleting my games?",
+        "Can you help me replace online gaming with outdoor activities?",
+        "I spend my free time on games and want a more balanced schedule.",
+        "Which global crisis are people talking about in the news?",
+        "Explain the causes of a financial crisis in simple terms.",
+        "What is the difference between a sad film and a comedy?",
+        "I am researching the definition of anxiety for a school project.",
+        "How does artificial intelligence turn words into numbers?",
+        "My laptop is slow; how can I close unnecessary applications?",
+        "Can you recommend ways to organize my notes for an exam?",
+        "I need a simple plan to finish my homework this afternoon.",
+        "Help me draft an introduction for our class presentation.",
+        "What are some inexpensive meals I can cook in a dorm?",
+        "I am not feeling anxious; I want advice on choosing a hobby.",
+        "I enjoy music and want to learn how to play the guitar.",
+    ),
+    "MODERATE": (
+        "I feel uneasy whenever I enter a crowded classroom.",
+        "I have trouble relaxing because my mind keeps returning to deadlines.",
+        "I miss home and feel disconnected since moving to university.",
+        "I feel shaky before presentations and want help managing the worry.",
+        "I have been doubting myself and finding school less enjoyable.",
+        "I feel hurt after being excluded by my classmates.",
+        "I have been grieving a loss and would like someone to listen.",
+        "I am carrying a lot of pressure and feel emotionally worn down.",
+        "I keep waking up worried about the next school day.",
+        "I feel lonely even when I am surrounded by people.",
+        "I have been crying after class but can still do my daily routine.",
+        "I worry too much about making mistakes in front of others.",
+        "I feel tense and restless despite trying to take breaks.",
+        "I am struggling with my confidence and need reassurance.",
+        "I feel sad about my relationship ending and need to talk.",
+        "I feel overwhelmed lately but I am still eating and attending class.",
+    ),
+    "HIGH_CONCERN": (
+        "I feel there is no reason for me to keep trying anymore.",
+        "I have completely isolated myself and cannot handle basic tasks.",
+        "I feel worthless and spend nearly every day unable to leave bed.",
+        "I wish I could stop existing, without any intention to act right now.",
+        "I have given up looking after myself because nothing feels worthwhile.",
+        "I feel like everyone is better off when I am not around.",
+        "I do not want tomorrow to come, although I have no plan to harm myself.",
+        "I need urgent help from someone because I cannot cope alone.",
+        "I feel that my life is meaningless and I have stopped attending classes.",
+        "I am not eating or washing because my distress feels unbearable.",
+        "I keep wishing I would vanish, but I am not preparing to act.",
+        "I have lost all motivation to meet even my basic daily needs.",
+        "I feel trapped and cannot imagine anything improving.",
+        "I feel like a burden and have withdrawn completely from people.",
+        "I desperately need human support because I am unable to function.",
+        "I have no immediate plan to hurt myself, but I wish I were not here.",
+    ),
+    "IMMEDIATE_SAFETY": (
+        "I am going to take my life tonight and need someone to stop me.",
+        "I want to harm myself now and cannot guarantee my safety.",
+        "I have made preparations to end my life and intend to act today.",
+        "I may injure myself very soon if I remain alone.",
+        "I have already harmed myself and need urgent medical attention.",
+        "I am planning to kill myself before tonight is over.",
+        "I am about to harm myself and need immediate intervention.",
+        "I intend to act on my suicidal thoughts in the next few hours.",
+        "I do not feel safe from myself and might act right now.",
+        "I am ready to carry out a plan to end my life today.",
+        "I cannot resist the urge to hurt myself tonight.",
+        "I have started injuring myself and need someone to help now.",
+        "I will take my own life soon unless I get immediate help.",
+        "I have decided to die today and have a plan to act.",
+        "I might kill myself this evening and need emergency help.",
+        "I want to end my life immediately and am not safe alone.",
+    ),
+}
+
 
 def generate_rows(seed: int = 42) -> list[dict]:
     """Generate balanced examples; no identifiers are inserted in text."""
@@ -273,6 +350,18 @@ def generate_rows(seed: int = 42) -> list[dict]:
                                  "conversation_id": f"{student}-conversation", "split": split,
                                  "subgroup": "synthetic-english", "data_source": "synthetic", "language": "en",
                                  "template_family": f"{GENERATOR_VERSION}:{label}:{split}:{family_index}"})
+    # Append after all base text is generated, so expansion cannot change held-out
+    # wording/order of context sentences through a shifted random-number stream.
+    for label in LABELS:
+        for index, phrase in enumerate(TRAINING_EXTENSIONS[label]):
+            family_index = len(PHRASES[label]["train"]) + index
+            student = f"synthetic-train-{family_index:03}"
+            for context in CONTEXTS:
+                text = f"{context} {phrase}" if rng.random() < 0.5 else f"{phrase} {context}"
+                rows.append({"text": text, "label": label, "student_id": student,
+                             "conversation_id": f"{student}-conversation", "split": "train",
+                             "subgroup": "synthetic-english", "data_source": "synthetic", "language": "en",
+                             "template_family": f"{GENERATOR_VERSION}:{label}:train:{family_index}"})
     rng.shuffle(rows)
     assert len({normalize(row["text"]) for row in rows}) == len(rows)
     return rows

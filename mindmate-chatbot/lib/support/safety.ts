@@ -184,14 +184,20 @@ export function conversationState(history: ChatMessage[], previous?: Conversatio
     prior_high_concern: previous?.prior_high_concern ?? false,
     prior_immediate_concern: previous?.prior_immediate_concern ?? false,
   };
+  let userSeen = false;
+  let supportedConcern = state.prior_high_concern || state.safety_question_active || history[0]?.role === "assistant";
   for (const message of history) {
     if (message.role === "assistant") {
       // A later unrelated assistant message does not erase an unanswered safety question.
       const kind = safetyQuestionKind(message.content);
-      if (kind) { state.safety_question_active = true; state.safety_question_kind = kind; }
+      // An unsolicited safety question after an ordinary user request is not
+      // evidence that the user is in danger. Partial histories remain conservative.
+      if (kind && (supportedConcern || !userSeen)) { state.safety_question_active = true; state.safety_question_kind = kind; }
       continue;
     }
     let level = analyzeSafety(message.content).level;
+    userSeen = true;
+    supportedConcern ||= level === "HIGH_CONCERN" || level === "IMMEDIATE_SAFETY";
     if (state.safety_question_active && unsafeReply(message.content, state.safety_question_kind)) level = "IMMEDIATE_SAFETY";
     state.highest_level = higher(state.highest_level, level);
     state.prior_high_concern ||= level === "HIGH_CONCERN" || level === "IMMEDIATE_SAFETY";

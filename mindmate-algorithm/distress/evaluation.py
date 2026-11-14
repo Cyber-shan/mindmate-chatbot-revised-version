@@ -179,6 +179,12 @@ def write_summary(metadata, path):
     lines = ["# Support-priority classification evaluation", "", f"Model: `{metadata['model_version']}`", "",
              metadata["evaluation_scope"], "", "These are classifier-only results. Application context rules and multi-turn tests are evaluated separately.", "",
              f"Partition leakage audit passed: {metadata['partition_audit']['passed']}. Student, conversation, normalized text and template families are checked in both holdouts and calibration folds.", ""]
+    selection = metadata.get("model_selection")
+    if selection:
+        lines += ["## Training-only model selection", "", selection["scope"], "",
+                  f"Status: {selection['status']}. Selected parameters: `{selection['selected']}`.",
+                  "Candidates must preserve the baseline training-CV Immediate and combined concern recall before ranking by macro F1 and log loss. This is not a clinical recall target.",
+                  "Validation and test messages never enter the search. Fitting is sequential with at most two numerical-library threads.", ""]
     for name in ("validation", "test"):
         metrics = metadata[name]
         lines += [f"## {name.title()}", "", f"Messages: {metrics['sample_count']}; independent evaluation groups: {metrics['confidence_intervals']['independent_group_count']}.", "",
